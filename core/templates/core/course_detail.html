@@ -1,0 +1,103 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Course Detail{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header with Logo and Menu -->
+    <div class="flex justify-between items-center mb-8">
+        <div class="text-2xl font-bold text-blue-600">LOGO</div>
+        <button class="md:hidden text-gray-600">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+        <div class="hidden md:flex space-x-6">
+            <a href="/" class="text-gray-700 hover:text-blue-600">Home</a>
+            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link" 
+               onclick="alert('Coming soon!')">Courses</a>
+            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link" 
+               onclick="alert('Coming soon!')">Fitness Tools</a>
+            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link" 
+               onclick="alert('Coming soon!')">Cosmetics</a>
+        </div>
+    </div>
+
+    <!-- Course Content -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <!-- Course Image -->
+        <div class="relative">
+            <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-64 object-cover">
+        </div>
+
+        <div class="p-6">
+            <!-- Course Title and Engagement -->
+            <div class="flex justify-between items-start mb-4">
+                <h1 class="text-2xl font-bold text-gray-800">COURSE 1</h1>
+                <div class="flex items-center">
+                    <button class="text-gray-500 hover:text-red-500 mr-4 like-btn">
+                        <i class="far fa-heart text-xl"></i>
+                        <span class="ml-1 text-sm">{{ course.likes_count }}</span>
+                    </button>
+                    <span class="text-gray-500">
+                        <i class="far fa-comment mr-1"></i>
+                        <span class="text-sm">{{ course.comments_count }}</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Course Description -->
+            <div class="prose max-w-none mb-6">
+                {{ course.description }}
+            </div>
+
+            <!-- Buy/Preview Button -->
+            <div class="mt-8 text-center">
+                {% if course.purchased %}
+                    <a href="#" class="inline-block bg-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-600 transition duration-300">
+                        Preview Course
+                    </a>
+                    <p class="mt-2 text-sm text-gray-500">Thank you for purchasing! You can now access the course content.</p>
+                {% else %}
+                    <a href="#" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
+                        Buy Course - ${{ course.price }}
+                    </a>
+                    <p class="mt-2 text-sm text-gray-500">Purchase required to access course content.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .disabled-link {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Like button functionality
+    document.querySelector('.like-btn').addEventListener('click', function() {
+        const icon = this.querySelector('i');
+        if (icon.classList.contains('far')) {
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+            this.classList.remove('text-gray-500');
+            this.classList.add('text-red-500');
+        } else {
+            icon.classList.remove('fas');
+            icon.classList.add('far');
+            this.classList.remove('text-red-500');
+            this.classList.add('text-gray-500');
+        }
+    });
+    
+    // All disabled links
+    document.querySelectorAll('.disabled-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+        });
+    });
+});
+</script>
+{% endblock %}

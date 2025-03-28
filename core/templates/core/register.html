@@ -1,0 +1,107 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold text-center mb-6">Create Your Account</h2>
+    
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label for="id_first_name" class="block text-sm font-medium text-gray-700">First Name</label>
+                {{ form.first_name }}
+            </div>
+            <div>
+                <label for="id_last_name" class="block text-sm font-medium text-gray-700">Last Name</label>
+                {{ form.last_name }}
+            </div>
+        </div>
+        
+        <div>
+            <label for="id_email" class="block text-sm font-medium text-gray-700">Email</label>
+            {{ form.email }}
+        </div>
+        
+        <div>
+            <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+            <div class="flex">
+                {{ form.country_code }}
+                {{ form.phone }}
+            </div>
+        </div>
+        
+        <div>
+            <label for="id_password1" class="block text-sm font-medium text-gray-700">Password</label>
+            {{ form.password1 }}
+            <p class="mt-1 text-xs text-gray-500">
+                Your password must be at least 8 characters long.
+            </p>
+        </div>
+        
+        <div>
+            <label for="id_password2" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+            {{ form.password2 }}
+        </div>
+        
+        <div class="flex items-center">
+            {{ form.terms }}
+            <label for="id_terms" class="ml-2 block text-sm text-gray-700">
+                I agree to the <a href="#" class="text-blue-600 hover:text-blue-800">Terms & Conditions</a>
+            </label>
+        </div>
+        
+        <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            Create Account
+        </button>
+    </form>
+    
+    <div class="mt-4 text-center">
+        <p class="text-sm text-gray-600">
+            Already have an account?
+            <a href="{% url 'login' %}" class="font-medium text-blue-600 hover:text-blue-500">Sign in</a>
+        </p>
+    </div>
+</div>
+
+<style>
+    /* Style form inputs to match your modal */
+    input, select {
+        width: 100%;
+        padding: 0.5rem 1rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        margin-top: 0.25rem;
+    }
+    input:focus, select:focus {
+        outline: none;
+        ring: 2px solid #3b82f6;
+        border-color: #3b82f6;
+    }
+    #id_country_code {
+        width: 6rem;
+        border-right: none;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    #id_phone {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+</style>
+{% endblock %}

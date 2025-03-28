@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Course List</title>
+</head>
+<body>
+    <h1>Available Courses</h1>
+    <ul>
+        {% for course in courses %}
+            <li>
+                <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
+                - {{ course.category }} - ${{ course.price }}
+            </li>
+        {% endfor %}
+    </ul>
+    <h2>Featured Courses</h2>
+    <ul>
+        {% for course in featured_courses %}
+            <li>{{ course.title }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

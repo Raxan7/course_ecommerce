@@ -1,0 +1,95 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Home - Online Courses{% endblock %}
+
+{% block content %}
+<section class="hero bg-gradient-to-r from-blue-500 to-purple-600 text-white py-16">
+    <div class="container mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">The more knowledge you have, the less you fear</h1>
+        <p class="text-xl mb-8">Knowledge makes you unstoppable. Check out our available courses.</p>
+        <a href="#featured-course" class="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition duration-300">View Featured Course</a>
+    </div>
+</section>
+
+<section id="featured-course" class="py-12 bg-white">
+    <div class="container mx-auto">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-800">Our Featured Course</h2>
+            <p class="text-gray-600 mt-2">Happiness isn't just about what you buy - it's about owning the best quality</p>
+        </div>
+        
+        <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-4xl">
+            <div class="md:flex">
+                <div class="md:shrink-0">
+                    <img class="h-full w-full object-cover md:h-full md:w-64" src="{{ course.image.url }}" alt="{{ course.title }}">
+                </div>
+                <div class="p-8">
+                    <div class="uppercase tracking-wide text-sm text-blue-600 font-semibold">Premium Course</div>
+                    <h3 class="text-2xl font-semibold text-gray-800 mt-1">{{ course.title }}</h3>
+                    <div class="flex items-center mt-2">
+                        <span class="text-yellow-500 mr-1">
+                            <i class="fas fa-star"></i>
+                        </span>
+                        <span>{{ course.rating }}</span>
+                        <span class="mx-2 text-gray-400">•</span>
+                        <span class="text-gray-500">
+                            <i class="far fa-comment mr-1"></i>
+                            {{ course.comment_count }} reviews
+                        </span>
+                    </div>
+                    <p class="mt-4 text-gray-600">{{ course.short_description }}</p>
+                    <div class="mt-6 flex items-center justify-between">
+                        <span class="text-2xl font-bold text-gray-900">${{ course.price }}</span>
+                        {% if course %}
+                        <a href="{% url 'course_detail' course.id %}" class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300">
+                            {% if course.purchased %}Preview Course{% else %}Enroll Now{% endif %}
+                        </a>
+                        {% else %}
+                        <p class="text-gray-600">No featured course available at the moment.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-12 bg-gray-50">
+    <div class="container mx-auto text-center">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Why Choose Our Course?</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="text-blue-600 mb-4">
+                    <i class="fas fa-graduation-cap text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Quality Education</h3>
+                <p class="text-gray-600">Comprehensive content designed by experts to give you practical knowledge.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="text-blue-600 mb-4">
+                    <i class="fas fa-users text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Join Our Community</h3>
+                <p class="text-gray-600">Connect with over 100,000 learners in our growing community.</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <div class="text-blue-600 mb-4">
+                    <i class="fas fa-certificate text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Get Certified</h3>
+                <p class="text-gray-600">Earn a certificate upon completion to showcase your new skills.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-12 bg-white">
+    <div class="container mx-auto text-center">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Ready to get started?</h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-8">Join thousands of satisfied learners who have transformed their skills with our course.</p>
+        <a href="{% url 'course_detail' course.id %}" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
+            {% if course.purchased %}Continue Learning{% else %}Enroll Now{% endif %}
+        </a>
+    </div>
+</section>
+{% endblock %}
