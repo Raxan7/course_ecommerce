@@ -6,4 +6,4 @@ idna==3.10
 pillow==8.4.0
 requests==2.27.1
 sqlparse==0.4.4
-urllib3==2.3.0
+urllib3==1.26.20
