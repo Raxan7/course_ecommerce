@@ -4,30 +4,12 @@
             <div class="flex items-center">
                 <a href="{% url 'home' %}" class="text-2xl font-bold text-blue-600 flex items-center">
                     <i class="fas fa-graduation-cap mr-2"></i>
-                    EduMarket
+                    TheUni
                 </a>
             </div>
             
             <div class="hidden md:flex items-center space-x-8">
-                <nav>
-                    {% if user.is_authenticated %}
-                        <ul class="flex space-x-6">
-                            <li><a href="{% url 'home' %}" class="text-gray-700 hover:text-blue-600 font-medium">Home</a></li>
-                            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Courses</a></li>
-                            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Fitness</a></li>
-                            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Cosmetics</a></li>
-                        </ul>
-                    {% endif %}
-                </nav>
-                
                 <div class="flex items-center space-x-4">
-                    <button class="text-gray-600 hover:text-blue-600">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button class="text-gray-600 hover:text-blue-600 relative">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="absolute -top-2 -right-2 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                    </button>
                     {% if user.is_authenticated %}
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" class="flex items-center space-x-2 focus:outline-none">
@@ -36,15 +18,18 @@
                             </div>
                         </button>
                         <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">My Courses</a>
-                            <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                            <a href="{% url 'logout' %}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="block px-4 py-2 text-sm text-gray-700 hover:text-blue-600">
+                                Logout
+                            </a>
+                            <form id="logout-form" action="{% url 'logout' %}" method="post" class="hidden">
+                                {% csrf_token %}
+                            </form>
                         </div>
                     </div>
                     {% else %}
-                    <button onclick="document.getElementById('auth-modal').classList.remove('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300">
-                        Sign In
-                    </button>
+                    <a href="{% url 'login' %}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300">
+                        Login
+                    </a>
                     {% endif %}
                 </div>
             </div>
@@ -59,10 +44,22 @@
     <!-- Mobile menu -->
     <div id="mobile-menu" class="hidden md:hidden bg-white shadow-md">
         <ul class="space-y-4 p-4">
-            <li><a href="{% url 'home' %}" class="text-gray-700 hover:text-blue-600 font-medium">Home</a></li>
-            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Courses</a></li>
-            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Fitness</a></li>
-            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Cosmetics</a></li>
+            {% if user.is_authenticated %}
+            <li>
+                <a href="{% url 'logout' %}" onclick="event.preventDefault(); document.getElementById('mobile-logout-form').submit();" class="text-gray-700 hover:text-blue-600 font-medium">
+                    Logout
+                </a>
+                <form id="mobile-logout-form" action="{% url 'logout' %}" method="post" class="hidden">
+                    {% csrf_token %}
+                </form>
+            </li>
+            {% else %}
+            <li>
+                <a href="{% url 'login' %}" class="text-gray-700 hover:text-blue-600 font-medium">
+                    Login
+                </a>
+            </li>
+            {% endif %}
         </ul>
     </div>
 </header>

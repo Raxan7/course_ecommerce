@@ -1,23 +1,115 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Course List</title>
-</head>
-<body>
-    <h1>Available Courses</h1>
-    <ul>
-        {% for course in courses %}
-            <li>
-                <a href="{% url 'course_detail' course.id %}">{{ course.title }}</a>
-                - {{ course.category }} - ${{ course.price }}
-            </li>
-        {% endfor %}
-    </ul>
-    <h2>Featured Courses</h2>
-    <ul>
-        {% for course in featured_courses %}
-            <li>{{ course.title }}</li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+{% extends 'core/base.html' %}
+
+{% block title %}Available Courses{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div class="text-2xl font-bold text-blue-600">LOGO</div>
+        <div class="hidden md:flex space-x-6">
+            <a href="/" class="text-gray-700 hover:text-blue-600">Home</a>
+            <a href="#" class="text-blue-600 font-semibold">Courses</a>
+            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link">Fitness Tools</a>
+            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link">Cosmetics</a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="mb-12">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Available Courses</h1>
+        
+        <!-- Course Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for course_data in courses_with_prices %}
+            {% with course=course_data.course %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                <a href="{% url 'course_detail' course.id %}">
+                    <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-48 object-cover">
+                </a>
+                <div class="p-4">
+                    <h2 class="text-xl font-semibold mb-2">
+                        <a href="{% url 'course_detail' course.id %}" class="hover:text-blue-600">{{ course.title }}</a>
+                    </h2>
+                    <p class="text-gray-600 mb-3">{{ course.short_description }}</p>
+                    
+                    <!-- Rating -->
+                    <div class="flex items-center mb-3">
+                        <div class="flex text-yellow-400 mr-2">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= course.rating %}
+                                    <i class="fas fa-star text-sm"></i>
+                                {% else %}
+                                    <i class="far fa-star text-sm"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="text-gray-500 text-sm">{{ course.comments_count }} reviews</span>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-lg font-bold text-blue-600">TZS {{ course_data.price_tzs }}</span>
+                            <span class="text-sm text-gray-500 ml-2">≈ ${{ course_data.price_usd }}</span>
+                        </div>
+                        <a href="{% url 'course_detail' course.id %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Featured Courses Section -->
+    {% if featured_courses %}
+    <div class="mb-12">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Featured Courses</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for course_data in featured_courses %}
+            {% with course=course_data.course %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border-2 border-blue-500">
+                <a href="{% url 'course_detail' course.id %}">
+                    <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-40 object-cover">
+                </a>
+                <div class="p-4">
+                    <h3 class="font-semibold mb-2">
+                        <a href="{% url 'course_detail' course.id %}" class="hover:text-blue-600">{{ course.title }}</a>
+                    </h3>
+                    <div class="flex justify-between items-center">
+                        <span class="text-blue-600 font-bold">TZS {{ course_data.price_tzs }}</span>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">Featured</span>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .disabled-link {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+    .fa-star {
+        margin-right: 1px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // All disabled links
+    document.querySelectorAll('.disabled-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,6 +1,6 @@
 {% extends 'core/base.html' %}
 
-{% block title %}Course Detail{% endblock %}
+{% block title %}{{ course.title }}{% endblock %}
 
 {% block content %}
 <div class="container mx-auto px-4 py-8">
@@ -31,7 +31,7 @@
         <div class="p-6">
             <!-- Course Title and Engagement -->
             <div class="flex justify-between items-start mb-4">
-                <h1 class="text-2xl font-bold text-gray-800">COURSE 1</h1>
+                <h1 class="text-2xl font-bold text-gray-800">{{ course.title }}</h1>
                 <div class="flex items-center">
                     <button class="text-gray-500 hover:text-red-500 mr-4 like-btn">
                         <i class="far fa-heart text-xl"></i>
@@ -44,26 +44,93 @@
                 </div>
             </div>
 
+            <!-- Rating -->
+            <div class="flex items-center mb-4">
+                <div class="flex text-yellow-400">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= course.rating %}
+                            <i class="fas fa-star"></i>
+                        {% else %}
+                            <i class="far fa-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <span class="ml-2 text-gray-600">{{ course.rating|floatformat:1 }} ({{ course.comments_count }} reviews)</span>
+            </div>
+
             <!-- Course Description -->
             <div class="prose max-w-none mb-6">
                 {{ course.description }}
+            </div>
+
+            <!-- Price Options -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-2">Price Options:</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="border rounded-lg p-3 text-center">
+                        <div class="font-bold">TZS {{ course.price_tzs }}</div>
+                        <div class="text-sm text-gray-500">Tanzanian Shilling</div>
+                    </div>
+                    <div class="border rounded-lg p-3 text-center">
+                        <div class="font-bold">${{ course.price_usd }}</div>
+                        <div class="text-sm text-gray-500">US Dollar</div>
+                    </div>
+                    <div class="border rounded-lg p-3 text-center">
+                        <div class="font-bold">KSh {{ course.price_kes }}</div>
+                        <div class="text-sm text-gray-500">Kenyan Shilling</div>
+                    </div>
+                    <div class="border rounded-lg p-3 text-center">
+                        <div class="font-bold">€{{ course.price_eur }}</div>
+                        <div class="text-sm text-gray-500">Euro</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Currency Selection -->
+            <div class="mb-6">
+                <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">Select Currency:</label>
+                <select id="currency" class="w-full p-2 border rounded-md">
+                    <option value="TZS">Tanzanian Shilling (TZS)</option>
+                    <option value="USD">US Dollar ($)</option>
+                    <option value="KES">Kenyan Shilling (KSh)</option>
+                    <option value="EUR">Euro (€)</option>
+                </select>
             </div>
 
             <!-- Buy/Preview Button -->
             <div class="mt-8 text-center">
                 {% if course.purchased %}
                     <a href="#" class="inline-block bg-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-600 transition duration-300">
-                        Preview Course
+                        Access Course Content
                     </a>
-                    <p class="mt-2 text-sm text-gray-500">Thank you for purchasing! You can now access the course content.</p>
+                    <p class="mt-2 text-sm text-gray-500">Thank you for purchasing! You can now access all course materials.</p>
                 {% else %}
-                    <a href="#" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
-                        Buy Course - ${{ course.price }}
-                    </a>
-                    <p class="mt-2 text-sm text-gray-500">Purchase required to access course content.</p>
+                    <button id="buy-button" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
+                        Buy Course - TZS {{ course.price_tzs }}
+                    </button>
+                    <p class="mt-2 text-sm text-gray-500">Secure payment processing. Instant access after purchase.</p>
                 {% endif %}
             </div>
         </div>
+    </div>
+</div>
+
+<!-- API Connection Modal -->
+<div id="api-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 max-w-sm w-full">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold">Processing Payment</h3>
+            <button id="close-modal" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="flex items-center mb-4">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+            <p>Connecting to payment API...</p>
+        </div>
+        <button id="confirm-modal" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300">
+            OK
+        </button>
     </div>
 </div>
 
@@ -71,6 +138,16 @@
     .disabled-link {
         cursor: not-allowed;
         opacity: 0.6;
+    }
+    .fa-star {
+        margin-right: 2px;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .animate-spin {
+        animation: spin 1s linear infinite;
     }
 </style>
 
@@ -97,6 +174,71 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault();
         });
+    });
+
+    // Currency selection functionality
+    const currencySelect = document.getElementById('currency');
+    const buyButton = document.getElementById('buy-button');
+    
+    if (currencySelect && buyButton) {
+        currencySelect.addEventListener('change', function() {
+            const currency = this.value;
+            let price = '{{ course.price_tzs }}';
+            let symbol = 'TZS ';
+            
+            switch(currency) {
+                case 'USD':
+                    price = '{{ course.price_usd }}';
+                    symbol = '$';
+                    break;
+                case 'KES':
+                    price = '{{ course.price_kes }}';
+                    symbol = 'KSh ';
+                    break;
+                case 'EUR':
+                    price = '{{ course.price_eur }}';
+                    symbol = '€';
+                    break;
+            }
+            
+            buyButton.textContent = `Buy Course - ${symbol}${price}`;
+        });
+    }
+
+    // API Connection Modal
+    const apiModal = document.getElementById('api-modal');
+    const closeModal = document.getElementById('close-modal');
+    const confirmModal = document.getElementById('confirm-modal');
+
+    if (buyButton) {
+        buyButton.addEventListener('click', function() {
+            // Show the modal
+            apiModal.classList.remove('hidden');
+            
+            // Here you would typically make the actual API call
+            // For demonstration, we're just showing the modal
+        });
+    }
+
+    if (closeModal) {
+        closeModal.addEventListener('click', function() {
+            apiModal.classList.add('hidden');
+        });
+    }
+
+    if (confirmModal) {
+        confirmModal.addEventListener('click', function() {
+            apiModal.classList.add('hidden');
+            // Here you would typically proceed with payment processing
+            alert('Payment processing initiated. You will be redirected to the payment gateway.');
+        });
+    }
+
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === apiModal) {
+            apiModal.classList.add('hidden');
+        }
     });
 });
 </script>
