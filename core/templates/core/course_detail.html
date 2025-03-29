@@ -12,8 +12,7 @@
         </button>
         <div class="hidden md:flex space-x-6">
             <a href="/" class="text-gray-700 hover:text-blue-600">Home</a>
-            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link" 
-               onclick="alert('Coming soon!')">Courses</a>
+            <a href="{% url 'course_list' %}" class="text-gray-700 hover:text-blue-600">Courses</a>
             <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link" 
                onclick="alert('Coming soon!')">Fitness Tools</a>
             <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link" 
