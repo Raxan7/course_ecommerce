@@ -1,9 +1,9 @@
 asgiref==3.4.1
 certifi==2025.1.31
-charset-normalizer==3.0.1
+charset-normalizer
 Django==3.2.25
 idna==3.10
 pillow==8.4.0
-requests==2.27.1
+requests
 sqlparse==0.4.4
 urllib3==1.26.20
