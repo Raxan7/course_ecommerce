@@ -10,12 +10,14 @@
             
             <div class="hidden md:flex items-center space-x-8">
                 <nav>
-                    <ul class="flex space-x-6">
-                        <li><a href="{% url 'home' %}" class="text-gray-700 hover:text-blue-600 font-medium">Home</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Courses</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Fitness</a></li>
-                        <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Cosmetics</a></li>
-                    </ul>
+                    {% if user.is_authenticated %}
+                        <ul class="flex space-x-6">
+                            <li><a href="{% url 'home' %}" class="text-gray-700 hover:text-blue-600 font-medium">Home</a></li>
+                            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Courses</a></li>
+                            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Fitness</a></li>
+                            <li><a href="#" class="text-gray-700 hover:text-blue-600 font-medium" onclick="alert('Coming soon!')">Cosmetics</a></li>
+                        </ul>
+                    {% endif %}
                 </nav>
                 
                 <div class="flex items-center space-x-4">

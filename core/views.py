@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout  # Import logout function
 from .models import Course
 from .forms import CheckoutForm, LoginForm  # Ensure LoginForm is created
 import requests  # For Pesapal API integration
@@ -25,6 +25,8 @@ def register(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            user.username = form.cleaned_data['username']  # Save username
+            user.save()
             
             # Save phone number to profile
             profile = user.profile
@@ -162,8 +164,8 @@ def home(request):
 
 
 @login_required
-def course_detail(request):
-    course = get_object_or_404(Course, pk=1)  # Assuming course with ID 1
+def course_detail(request, id):  # Accept 'id' as a parameter
+    course = get_object_or_404(Course, pk=id)  # Use 'id' to fetch the course
     purchased = UserCourse.objects.filter(user=request.user, course=course).exists()
     
     context = {
@@ -178,3 +180,10 @@ def course_detail(request):
         }
     }
     return render(request, 'core/course_detail.html', context)
+
+def logout_view(request):
+    if request.method == 'GET':
+        logout(request)
+        messages.success(request, 'You have been logged out successfully.')
+        return redirect('home')  # Redirect to home page after logout
+    return HttpResponse(status=405)  # Return 405 for unsupported methods
