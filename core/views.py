@@ -7,80 +7,92 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-from .models import Course, UserCourse, CoursePrice, Currency
+from django.views.decorators.http import require_http_methods, require_POST
+from .models import Course, CourseTier, UserCourse, CoursePrice, Currency
 from .forms import CheckoutForm, LoginForm, CustomUserCreationForm
 import requests
 
-# Utility function to get course price in different currencies
-def get_course_price(course, currency_code='TZS'):
+# Utility function to get tier prices
+def get_tier_prices(tier, currency_code='TZS'):
     try:
         currency = Currency.objects.get(code=currency_code)
-        price = CoursePrice.objects.get(course=course, currency=currency)
+        price = CoursePrice.objects.get(tier=tier, currency=currency)
         return price.amount
     except (Currency.DoesNotExist, CoursePrice.DoesNotExist):
-        return course.base_price  # Fallback to base price
+        return None
 
 # Home view
 def home(request):
-    featured_course = Course.objects.filter(featured=True).first()
-    if not featured_course:
-        return render(request, 'core/index.html', {'course': None})
-
+    # Get all active tiers
+    tiers = CourseTier.objects.filter(courses__is_active=True).distinct().order_by('order')
+    
+    tier_data = []
+    for tier in tiers:
+        # Get the first active course for this tier (they should be the same content)
+        course = tier.courses.filter(is_active=True).first()
+        if course:
+            tier_data.append({
+                'tier': tier,
+                'course': course,
+                'price_tzs': get_tier_prices(tier, 'TZS'),
+                'price_usd': get_tier_prices(tier, 'USD'),
+                'price_kes': get_tier_prices(tier, 'KES'),
+                'price_eur': get_tier_prices(tier, 'EUR'),
+            })
+    
+    featured_tier = CourseTier.objects.filter(courses__featured=True).first()
+    featured_course = featured_tier.courses.filter(featured=True).first() if featured_tier else None
+    
     purchased = False
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and featured_course:
         purchased = UserCourse.objects.filter(user=request.user, course=featured_course).exists()
 
-    # Get prices for different currencies
-    price_tzs = get_course_price(featured_course, 'TZS')
-    price_usd = get_course_price(featured_course, 'USD')
-    price_kes = get_course_price(featured_course, 'KES')
-    price_eur = get_course_price(featured_course, 'EUR')
-
     context = {
-        'course': {
-            'id': featured_course.id,
-            'title': featured_course.title,
-            'image': featured_course.image,
-            'short_description': featured_course.short_description,
-            'rating': featured_course.rating,
-            'comment_count': featured_course.comments_count,
-            'base_price': featured_course.base_price,
-            'price_tzs': price_tzs,
-            'price_usd': price_usd,
-            'price_kes': price_kes,
-            'price_eur': price_eur,
+        'tiers': tier_data,
+        'featured_course': {
+            'id': featured_course.id if featured_course else None,
+            'title': featured_course.title if featured_course else None,
+            'image': featured_course.image if featured_course else None,
+            'short_description': featured_course.short_description if featured_course else None,
+            'rating': featured_course.rating if featured_course else 0,
+            'comment_count': featured_course.comments_count if featured_course else 0,
             'purchased': purchased,
-        }
+            'tier': featured_tier,
+            'price_tzs': get_tier_prices(featured_tier, 'TZS') if featured_tier else None,
+            'price_usd': get_tier_prices(featured_tier, 'USD') if featured_tier else None,
+            'price_kes': get_tier_prices(featured_tier, 'KES') if featured_tier else None,
+            'price_eur': get_tier_prices(featured_tier, 'EUR') if featured_tier else None,
+        } if featured_course else None
     }
     return render(request, 'core/index.html', context)
 
-# Course detail view
 @login_required
 def course_detail(request, id):
     course = get_object_or_404(Course, pk=id)
     purchased = UserCourse.objects.filter(user=request.user, course=course).exists()
     
-    # Get prices for different currencies
-    price_tzs = get_course_price(course, 'TZS')
-    price_usd = get_course_price(course, 'USD')
-    price_kes = get_course_price(course, 'KES')
-    price_eur = get_course_price(course, 'EUR')
+    # Get all tiers available for this course
+    tiers = course.available_tiers.all().order_by('order')
+    
+    # If no specific tiers are set, get all tiers (fallback)
+    if not tiers.exists():
+        tiers = CourseTier.objects.all().order_by('order')
+    
+    tier_data = []
+    for tier in tiers:
+        tier_data.append({
+            'tier': tier,
+            'price_tzs': get_tier_prices(tier, 'TZS'),
+            'price_usd': get_tier_prices(tier, 'USD'),
+            'price_kes': get_tier_prices(tier, 'KES'),
+            'price_eur': get_tier_prices(tier, 'EUR'),
+        })
 
     context = {
-        'course': {
-            'title': course.title,
-            'image': course.image,
-            'description': course.description,
-            'likes_count': course.likes_count,
-            'comments_count': course.comments_count,
-            'base_price': course.base_price,
-            'price_tzs': price_tzs,
-            'price_usd': price_usd,
-            'price_kes': price_kes,
-            'price_eur': price_eur,
-            'purchased': purchased,
-        }
+        'course': course,
+        'tiers': tier_data,
+        'current_tier': course.tier,  # or get from request.GET if you want to change tiers
+        'purchased': purchased,
     }
     return render(request, 'core/course_detail.html', context)
 
@@ -91,14 +103,15 @@ class CourseCheckoutView(View):
         if form.is_valid():
             try:
                 course = Course.objects.get(id=course_id)
+                tier = course.tier
                 currency = form.cleaned_data.get('currency', 'TZS')
-                price = get_course_price(course, currency)
+                price = get_tier_prices(tier, currency)
                 
                 # Pesapal payment integration
                 pesapal_url = "https://www.pesapal.com/API/PostPesapalDirectOrderV4"
                 payload = {
                     'Amount': price,
-                    'Description': f'Payment for {course.title}',
+                    'Description': f'Payment for {course.title} ({tier.get_name_display()})',
                     'Type': 'MERCHANT',
                     'Reference': f'course-{course.id}-{request.user.id}',
                     'FirstName': request.user.first_name,
@@ -112,7 +125,11 @@ class CourseCheckoutView(View):
                 }
                 response = requests.post(pesapal_url, json=payload, headers=headers)
                 if response.status_code == 200:
-                    UserCourse.objects.create(user=request.user, course=course)
+                    UserCourse.objects.create(
+                        user=request.user, 
+                        course=course,
+                        tier=tier
+                    )
                     messages.success(request, 'Payment successful. You are now enrolled.')
                     return redirect('course_detail', id=course.id)
                 else:
@@ -122,11 +139,34 @@ class CourseCheckoutView(View):
         return redirect('checkout', course_id=course_id)
 
 # Logout view
-@require_http_methods(["GET"])  # Restrict to GET requests
+@require_POST
 def logout_view(request):
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
-    return redirect('home')  # Redirect to home page after logout
+    return redirect('home')
+
+# User registration view
+class UserRegistrationView(View):
+    def get(self, request):
+        form = CustomUserCreationForm()
+        return render(request, 'core/register.html', {'form': form})
+
+    def post(self, request):
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            verification_link = f"{request.build_absolute_uri('/verify-email/')}?email={user.email}"
+            send_mail(
+                'Verify your email',
+                f'Click the link to verify your email: {verification_link}',
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+            )
+            messages.success(request, 'Verification email sent.')
+            return redirect('login')
+        return render(request, 'core/register.html', {'form': form})
 
 def register(request):
     if request.method == 'POST':
@@ -152,7 +192,27 @@ def register(request):
     
     return render(request, 'core/register.html', {'form': form})
 
+# User login view
+class UserLoginView(View):
+    def get(self, request):
+        form = LoginForm()
+        return render(request, 'core/login.html', {'form': form})
 
+    def post(self, request):
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                messages.success(request, 'Login successful.')
+                return redirect('home')
+            else:
+                messages.error(request, 'Invalid username or password.')
+        return render(request, 'core/login.html', {'form': form})
+
+# Course list view
 class CourseListView(ListView):
     model = Course
     template_name = 'core/course_list.html'
@@ -177,10 +237,10 @@ class CourseListView(ListView):
         for course in context['courses']:
             course_data = {
                 'course': course,
-                'price_tzs': get_course_price(course, 'TZS'),
-                'price_usd': get_course_price(course, 'USD'),
-                'price_kes': get_course_price(course, 'KES'),
-                'price_eur': get_course_price(course, 'EUR'),
+                'price_tzs': get_tier_prices(course.tier, 'TZS'),
+                'price_usd': get_tier_prices(course.tier, 'USD'),
+                'price_kes': get_tier_prices(course.tier, 'KES'),
+                'price_eur': get_tier_prices(course.tier, 'EUR'),
             }
             courses_with_prices.append(course_data)
         
@@ -192,60 +252,10 @@ class CourseListView(ListView):
         for course in featured_courses:
             featured_with_prices.append({
                 'course': course,
-                'price_tzs': get_course_price(course, 'TZS'),
-                'price_usd': get_course_price(course, 'USD'),
+                'price_tzs': get_tier_prices(course.tier, 'TZS'),
+                'price_usd': get_tier_prices(course.tier, 'USD'),
             })
         
         context['featured_courses'] = featured_with_prices
         
         return context
-
-class UserRegistrationView(View):
-    def get(self, request):
-        form = CustomUserCreationForm()  # Use CustomUserCreationForm
-        return render(request, 'core/register.html', {'form': form})  # Template for user registration
-
-    def post(self, request):
-        form = CustomUserCreationForm(request.POST)  # Use CustomUserCreationForm
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.is_active = False
-            user.save()
-            verification_link = f"{request.build_absolute_uri('/verify-email/')}?email={user.email}"
-            send_mail(
-                'Verify your email',
-                f'Click the link to verify your email: {verification_link}',
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-            )
-            messages.success(request, 'Verification email sent.')
-            return redirect('login')  # Ensure 'login' matches the URL pattern name
-        return render(request, 'core/register.html', {'form': form})  # Template for user registration
-
-class UserLoginView(View):
-    def get(self, request):
-        form = LoginForm()
-        return render(request, 'core/login.html', {'form': form})  # Template for user login
-
-    def post(self, request):
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(request, username=username, password=password)
-            if user is not None:
-                login(request, user)
-                messages.success(request, 'Login successful.')
-                return redirect('home')  # Redirect to home or another page
-            else:
-                messages.error(request, 'Invalid username or password.')
-        return render(request, 'core/login.html', {'form': form})  # Re-render login template with errors
-
-
-from django.views.decorators.http import require_POST
-
-@require_POST
-def logout_view(request):
-    logout(request)
-    messages.success(request, 'You have been logged out successfully.')
-    return redirect('home')

@@ -1,244 +1,179 @@
 {% extends 'core/base.html' %}
-
-{% block title %}{{ course.title }}{% endblock %}
+{% load custom_filters %}
+{% block title %}{{ course.title }} - {{ course.tier.get_name_display }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Header with Logo and Menu -->
-    <div class="flex justify-between items-center mb-8">
-        <div class="text-2xl font-bold text-blue-600">LOGO</div>
-        <button class="md:hidden text-gray-600">
-            <i class="fas fa-bars text-2xl"></i>
-        </button>
-        <div class="hidden md:flex space-x-6">
-            <a href="/" class="text-gray-700 hover:text-blue-600">Home</a>
-            <a href="{% url 'course_list' %}" class="text-gray-700 hover:text-blue-600">Courses</a>
-            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link" 
-               onclick="alert('Coming soon!')">Fitness Tools</a>
-            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link" 
-               onclick="alert('Coming soon!')">Cosmetics</a>
+<div class="container mx-auto px-4 py-4">
+    <!-- Compact Header -->
+    <div class="flex justify-between items-center mb-4">
+        <div class="hidden md:flex space-x-4">
+            <a href="/" class="text-gray-700 hover:text-blue-600 text-sm">Home</a>
+            <a href="{% url 'course_list' %}" class="text-gray-700 hover:text-blue-600 text-sm">Courses</a>
         </div>
     </div>
 
-    <!-- Course Content -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <!-- Compact Course Content -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
         <!-- Course Image -->
         <div class="relative">
-            <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-64 object-cover">
+            <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-48 object-cover">
+            <div class="absolute top-2 right-2 bg-blue-600 text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                {{ course.tier.get_name_display }}
+            </div>
         </div>
 
-        <div class="p-6">
-            <!-- Course Title and Engagement -->
-            <div class="flex justify-between items-start mb-4">
-                <h1 class="text-2xl font-bold text-gray-800">{{ course.title }}</h1>
-                <div class="flex items-center">
-                    <button class="text-gray-500 hover:text-red-500 mr-4 like-btn">
-                        <i class="far fa-heart text-xl"></i>
-                        <span class="ml-1 text-sm">{{ course.likes_count }}</span>
+        <div class="p-4">
+            <!-- Compact Title and Engagement -->
+            <div class="flex justify-between items-start mb-2">
+                <h1 class="text-xl font-bold text-gray-800">{{ course.title }}</h1>
+                <div class="flex items-center space-x-2">
+                    <button class="text-gray-500 hover:text-red-500 text-sm">
+                        <i class="far fa-heart text-lg"></i>
+                        <span>{{ course.likes_count }}</span>
                     </button>
-                    <span class="text-gray-500">
-                        <i class="far fa-comment mr-1"></i>
-                        <span class="text-sm">{{ course.comments_count }}</span>
+                    <span class="text-gray-500 text-sm">
+                        <i class="far fa-comment"></i>
+                        <span>{{ course.comments_count }}</span>
                     </span>
                 </div>
             </div>
 
-            <!-- Rating -->
-            <div class="flex items-center mb-4">
-                <div class="flex text-yellow-400">
+            <!-- Compact Rating -->
+            <div class="flex items-center mb-3 text-sm">
+                <div class="flex text-yellow-400 mr-1">
                     {% for i in "12345" %}
                         {% if forloop.counter <= course.rating %}
-                            <i class="fas fa-star"></i>
+                            <i class="fas fa-star text-sm"></i>
                         {% else %}
-                            <i class="far fa-star"></i>
+                            <i class="far fa-star text-sm"></i>
                         {% endif %}
                     {% endfor %}
                 </div>
-                <span class="ml-2 text-gray-600">{{ course.rating|floatformat:1 }} ({{ course.comments_count }} reviews)</span>
+                <span class="text-gray-600 ml-1">{{ course.rating|floatformat:1 }} ({{ course.comments_count }})</span>
             </div>
 
-            <!-- Course Description -->
-            <div class="prose max-w-none mb-6">
+            <!-- Compact Description -->
+            <div class="text-gray-600 text-sm mb-4">
                 {{ course.description }}
             </div>
 
-            <!-- Price Options -->
-            <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-2">Price Options:</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="border rounded-lg p-3 text-center">
-                        <div class="font-bold">TZS {{ course.price_tzs }}</div>
-                        <div class="text-sm text-gray-500">Tanzanian Shilling</div>
+            <!-- Compact Tier Selection -->
+            <div class="mb-4">
+                <h3 class="text-md font-semibold mb-2">Available Tiers:</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {% for tier in tiers %}
+                    <div class="border rounded-md p-3 text-sm {% if tier.tier == current_tier %}border-blue-400 bg-blue-50{% endif %}">
+                        <h4 class="font-semibold {% if tier.tier == current_tier %}text-blue-600{% endif %}">
+                            {{ tier.tier.get_name_display }}
+                        </h4>
+                        <div class="mt-1">
+                            <span class="font-medium">TZS {{ tier.price_tzs|floatformat:"0" }}</span>
+                            <span class="text-gray-500 text-xs ml-1">(${{ tier.price_usd }})</span>
+                        </div>
+                        {% if tier.tier != current_tier %}
+                        <a href="{% url 'course_detail' course.id %}?tier={{ tier.tier.id }}" class="text-blue-600 hover:text-blue-800 text-xs block mt-1">
+                            View Details
+                        </a>
+                        {% else %}
+                        <span class="text-green-600 text-xs block mt-1">Selected</span>
+                        {% endif %}
                     </div>
-                    <div class="border rounded-lg p-3 text-center">
-                        <div class="font-bold">${{ course.price_usd }}</div>
-                        <div class="text-sm text-gray-500">US Dollar</div>
-                    </div>
-                    <div class="border rounded-lg p-3 text-center">
-                        <div class="font-bold">KSh {{ course.price_kes }}</div>
-                        <div class="text-sm text-gray-500">Kenyan Shilling</div>
-                    </div>
-                    <div class="border rounded-lg p-3 text-center">
-                        <div class="font-bold">€{{ course.price_eur }}</div>
-                        <div class="text-sm text-gray-500">Euro</div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
-            <!-- Currency Selection -->
-            <div class="mb-6">
-                <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">Select Currency:</label>
-                <select id="currency" class="w-full p-2 border rounded-md">
-                    <option value="TZS">Tanzanian Shilling (TZS)</option>
-                    <option value="USD">US Dollar ($)</option>
-                    <option value="KES">Kenyan Shilling (KSh)</option>
-                    <option value="EUR">Euro (€)</option>
+            <!-- Compact Currency Selection -->
+            <div class="mb-4">
+                <label for="currency" class="block text-sm font-medium text-gray-700 mb-1">Currency:</label>
+                <select id="currency" class="w-full p-1.5 border rounded text-sm">
+                    <option value="TZS">TZS (Tanzanian Shilling)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="KES">KES (KSh)</option>
+                    <option value="EUR">EUR (€)</option>
                 </select>
             </div>
 
-            <!-- Buy/Preview Button -->
-            <div class="mt-8 text-center">
-                {% if course.purchased %}
-                    <a href="#" class="inline-block bg-green-500 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-600 transition duration-300">
-                        Access Course Content
+            <!-- Compact Action Buttons -->
+            <div class="mt-6 text-center">
+                {% if purchased %}
+                    <a href="#" class="inline-block bg-green-500 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-green-600">
+                        Access Course
                     </a>
-                    <p class="mt-2 text-sm text-gray-500">Thank you for purchasing! You can now access all course materials.</p>
+                    <p class="mt-1 text-xs text-gray-500">You have full access to course materials</p>
                 {% else %}
-                    <button id="buy-button" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
-                        Buy Course - TZS {{ course.price_tzs }}
+                    <button id="buy-button" class="inline-block bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                        Buy {{ current_tier.get_name_display|replace_apostrophe|safe }} - TZS {{ tiers.0.price_tzs|floatformat:"0" }}
                     </button>
-                    <p class="mt-2 text-sm text-gray-500">Secure payment processing. Instant access after purchase.</p>
+                    <p class="mt-1 text-xs text-gray-500">Secure payment, instant access</p>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- API Connection Modal -->
+<!-- Compact Modal -->
 <div id="api-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-lg p-6 max-w-sm w-full">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold">Processing Payment</h3>
+    <div class="bg-white rounded-md p-4 max-w-xs w-full">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-md font-semibold">Processing Payment</h3>
             <button id="close-modal" class="text-gray-500 hover:text-gray-700">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <div class="flex items-center mb-4">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
-            <p>Connecting to payment API...</p>
+        <div class="flex items-center mb-3 text-sm">
+            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-2"></div>
+            <p>Connecting to payment...</p>
         </div>
-        <button id="confirm-modal" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300">
+        <button id="confirm-modal" class="w-full bg-blue-600 text-white py-1.5 rounded text-sm hover:bg-blue-700">
             OK
         </button>
     </div>
 </div>
 
 <style>
-    .disabled-link {
-        cursor: not-allowed;
-        opacity: 0.6;
-    }
-    .fa-star {
-        margin-right: 2px;
+    .animate-spin {
+        animation: spin 1s linear infinite;
     }
     @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
-    .animate-spin {
-        animation: spin 1s linear infinite;
-    }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Like button functionality
-    document.querySelector('.like-btn').addEventListener('click', function() {
-        const icon = this.querySelector('i');
-        if (icon.classList.contains('far')) {
-            icon.classList.remove('far');
-            icon.classList.add('fas');
-            this.classList.remove('text-gray-500');
-            this.classList.add('text-red-500');
-        } else {
-            icon.classList.remove('fas');
-            icon.classList.add('far');
-            this.classList.remove('text-red-500');
-            this.classList.add('text-gray-500');
-        }
-    });
-    
-    // All disabled links
-    document.querySelectorAll('.disabled-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-        });
-    });
-
-    // Currency selection functionality
+    // Currency selection
     const currencySelect = document.getElementById('currency');
     const buyButton = document.getElementById('buy-button');
     
     if (currencySelect && buyButton) {
         currencySelect.addEventListener('change', function() {
             const currency = this.value;
-            let price = '{{ course.price_tzs }}';
+            let price = '{{ tiers.0.price_tzs|floatformat:"0" }}';
             let symbol = 'TZS ';
             
             switch(currency) {
-                case 'USD':
-                    price = '{{ course.price_usd }}';
-                    symbol = '$';
-                    break;
-                case 'KES':
-                    price = '{{ course.price_kes }}';
-                    symbol = 'KSh ';
-                    break;
-                case 'EUR':
-                    price = '{{ course.price_eur }}';
-                    symbol = '€';
-                    break;
+                case 'USD': price = '{{ tiers.0.price_usd }}'; symbol = '$'; break;
+                case 'KES': price = '{{ tiers.0.price_kes }}'; symbol = 'KSh '; break;
+                case 'EUR': price = '{{ tiers.0.price_eur }}'; symbol = '€'; break;
             }
             
-            buyButton.textContent = `Buy Course - ${symbol}${price}`;
+            buyButton.textContent = `Buy {{ current_tier.get_name_display }} - ${symbol}${price}`;
         });
     }
 
-    // API Connection Modal
+    // Modal handling
     const apiModal = document.getElementById('api-modal');
     const closeModal = document.getElementById('close-modal');
     const confirmModal = document.getElementById('confirm-modal');
 
-    if (buyButton) {
-        buyButton.addEventListener('click', function() {
-            // Show the modal
-            apiModal.classList.remove('hidden');
-            
-            // Here you would typically make the actual API call
-            // For demonstration, we're just showing the modal
-        });
-    }
-
-    if (closeModal) {
-        closeModal.addEventListener('click', function() {
-            apiModal.classList.add('hidden');
-        });
-    }
-
-    if (confirmModal) {
-        confirmModal.addEventListener('click', function() {
-            apiModal.classList.add('hidden');
-            // Here you would typically proceed with payment processing
-            alert('Payment processing initiated. You will be redirected to the payment gateway.');
-        });
-    }
-
-    // Close modal when clicking outside
-    window.addEventListener('click', function(event) {
-        if (event.target === apiModal) {
-            apiModal.classList.add('hidden');
-        }
+    if (buyButton) buyButton.addEventListener('click', () => apiModal.classList.remove('hidden'));
+    if (closeModal) closeModal.addEventListener('click', () => apiModal.classList.add('hidden'));
+    if (confirmModal) confirmModal.addEventListener('click', () => {
+        apiModal.classList.add('hidden');
+        alert('Payment processing initiated');
     });
+    window.addEventListener('click', (e) => { if (e.target === apiModal) apiModal.classList.add('hidden'); });
 });
 </script>
 {% endblock %}

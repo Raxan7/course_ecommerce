@@ -23,19 +23,36 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
             Profile.objects.create(user=instance)
 
 class Currency(models.Model):
-    code = models.CharField(max_length=3, unique=True)  # USD, TZS, KES, EUR
+    code = models.CharField(max_length=3, unique=True)
     name = models.CharField(max_length=50)
     symbol = models.CharField(max_length=5)
     
     def __str__(self):
         return f"{self.name} ({self.code})"
 
+class CourseTier(models.Model):
+    TIER_CHOICES = [
+        ('basic', 'Warrior\'s Path'),
+        ('standard', 'Champion\'s Edge'),
+        ('premium', 'King\'s Throne'),
+    ]
+    name = models.CharField(max_length=20, choices=TIER_CHOICES, unique=True)
+    description = models.TextField(blank=True)
+    order = models.PositiveSmallIntegerField(default=0)
+    courses = models.ManyToManyField('Course', related_name='available_tiers')
+    
+    class Meta:
+        ordering = ['order']
+        
+    def __str__(self):
+        return self.get_name_display()
+
 class Course(models.Model):
+    # Common fields for all tiers
     title = models.CharField(max_length=200)
-    description = models.TextField()
     short_description = models.CharField(max_length=300)
+    description = models.TextField()
     image = models.ImageField(upload_to='course_images/')
-    base_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price in TZS")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     likes_count = models.IntegerField(default=0)
@@ -43,27 +60,31 @@ class Course(models.Model):
     rating = models.DecimalField(max_digits=3, decimal_places=1, default=0)
     featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-
+    
+    # Tier relationship
+    tier = models.ForeignKey(CourseTier, on_delete=models.PROTECT, related_name='default_courses')
+    
     class Meta:
         ordering = ['-featured', '-created_at']
 
     def __str__(self):
-        return self.title
+        return f"{self.title} ({self.tier.get_name_display()})"
 
 class CoursePrice(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='prices')
+    tier = models.ForeignKey(CourseTier, on_delete=models.CASCADE, related_name='prices')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     class Meta:
-        unique_together = ('course', 'currency')
+        unique_together = ('tier', 'currency')
 
     def __str__(self):
-        return f"{self.course.title} - {self.currency.code} {self.amount}"
+        return f"{self.tier.get_name_display()} - {self.currency.code} {self.amount}"
 
 class UserCourse(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='enrolled_courses')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
+    tier = models.ForeignKey(CourseTier, on_delete=models.PROTECT)
     purchased_at = models.DateTimeField(auto_now_add=True)
     completed = models.BooleanField(default=False)
     completion_date = models.DateTimeField(null=True, blank=True)
@@ -73,10 +94,11 @@ class UserCourse(models.Model):
         ordering = ['-purchased_at']
 
     def __str__(self):
-        return f"{self.user.username} - {self.course.title}"
+        return f"{self.user.username} - {self.course.title} ({self.tier.get_name_display()})"
 
 class Review(models.Model):
     course = models.ForeignKey(Course, related_name='reviews', on_delete=models.CASCADE)
+    tier = models.ForeignKey(CourseTier, on_delete=models.PROTECT)
     user = models.ForeignKey(User, related_name='reviews', on_delete=models.CASCADE)
     rating = models.PositiveIntegerField(choices=[(i, i) for i in range(1, 6)])
     comment = models.TextField()
@@ -88,4 +110,4 @@ class Review(models.Model):
         unique_together = ('course', 'user')
 
     def __str__(self):
-        return f"{self.user.username}'s {self.rating}-star review for {self.course.title}"
+        return f"{self.user.username}'s {self.rating}-star review for {self.course.title} ({self.tier.get_name_display()})"

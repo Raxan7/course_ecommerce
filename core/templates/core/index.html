@@ -1,102 +1,106 @@
 {% extends 'core/base.html' %}
-
 {% block title %}Home - Online Courses{% endblock %}
-
 {% block content %}
-<section class="hero bg-gradient-to-r from-blue-500 to-purple-600 text-white py-16">
-    <div class="container mx-auto text-center">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">The more knowledge you have, the less you fear</h1>
-        <p class="text-xl mb-8">Knowledge makes you unstoppable. Check out our available courses.</p>
-        <a href="#featured-course" class="bg-white text-blue-600 px-6 py-3 rounded-full font-semibold hover:bg-gray-100 transition duration-300">View Featured Course</a>
+<header class="bg-white shadow-sm py-3">
+  <div class="container mx-auto px-4 flex items-center justify-center">
+    <nav class="hidden md:flex space-x-6">
+      <a href="#" class="text-gray-800 hover:text-blue-600 text-sm">EDUCATION</a>
+      <a href="#" class="text-gray-800 hover:text-blue-600 text-sm">PRODUCTS</a>
+      <a href="#" class="text-gray-800 hover:text-blue-600 text-sm">SERVICES</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero relative bg-gradient-to-r from-blue-500 to-purple-600 text-white py-12 overflow-hidden">
+  <div class="absolute inset-0 opacity-20 grid grid-cols-3 grid-rows-2">
+    {% for i in "123456" %}
+    <div class="flex items-center justify-center">
+      <img src="https://via.placeholder.com/150x100/3B82F6/FFFFFF?text=Course+{{i}}" alt="Course {{i}}" class="h-20 object-contain">
     </div>
+    {% endfor %}
+  </div>
+  
+  <div class="container mx-auto text-center relative z-10 px-4">
+    <div class="inline-block bg-black bg-opacity-40 px-3 py-1 rounded-full mb-4">
+      <p class="text-xs font-medium">Join 1000+ transforming lives</p>
+    </div>
+    <h1 class="text-2xl md:text-3xl font-bold mb-3">The more knowledge you have, the less you fear</h1>
+    <p class="text-base mb-6">Knowledge makes you unstoppable.</p>
+    <a href="#featured-course" class="bg-white text-blue-600 px-4 py-2 rounded-full text-sm font-semibold hover:bg-gray-100 transition">View Course</a>
+  </div>
 </section>
 
-<section id="featured-course" class="py-12 bg-white">
-    <div class="container mx-auto">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-gray-800">Our Premium Course</h2>
-            <p class="text-gray-600 mt-2">Master the art of male performance, control, and dominance</p>
-        </div>
-        
-        {% if course %}
-        <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-4xl">
-            <div class="md:flex">
-                <div class="md:shrink-0">
-                    <img class="h-full w-full object-cover md:h-full md:w-64" src="{{ course.image.url }}" alt="{{ course.title }}">
-                </div>
-                <div class="p-8">
-                    <div class="uppercase tracking-wide text-sm text-blue-600 font-semibold">Most Popular</div>
-                    <h3 class="text-2xl font-semibold text-gray-800 mt-1">{{ course.title }}</h3>
-                    <div class="flex items-center mt-2">
-                        <span class="text-yellow-500 mr-1">
-                            <i class="fas fa-star"></i>
-                        </span>
-                        <span>{{ course.rating|floatformat:1 }}</span>
-                        <span class="mx-2 text-gray-400">•</span>
-                        <span class="text-gray-500">
-                            <i class="far fa-comment mr-1"></i>
-                            {{ course.comments_count }} reviews
-                        </span>
-                    </div>
-                    <p class="mt-4 text-gray-600">{{ course.short_description }}</p>
-                    <div class="mt-6">
-                        <a href="{% url 'course_detail' course.id %}" class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition duration-300">
-                            {% if course.purchased %}Access Course{% else %}Enroll in Course{% endif %}
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="text-center py-12">
-            <p class="text-gray-600">No featured course available at the moment.</p>
-        </div>
-        {% endif %}
+<section id="featured-course" class="py-8 bg-white">
+  <div class="container mx-auto px-4">
+    <div class="text-center mb-8">
+      <h2 class="text-xl font-bold text-gray-800">Premium Course</h2>
+      <p class="text-gray-600 text-sm mt-1">Master performance and dominance</p>
     </div>
+    
+    {% if course %}
+    <div class="max-w-md mx-auto bg-white rounded-lg shadow-md overflow-hidden md:max-w-2xl md:flex">
+      <div class="md:w-1/3">
+        <img class="w-full h-48 md:h-full object-cover" src="{{ course.image.url }}" alt="{{ course.title }}">
+      </div>
+      <div class="p-4 md:w-2/3">
+        <div class="uppercase text-xs text-blue-600 font-semibold">Popular</div>
+        <h3 class="text-lg font-semibold text-gray-800 mt-1">{{ course.title }}</h3>
+        <div class="flex items-center mt-1 text-sm">
+          <span class="text-yellow-500 mr-1"><i class="fas fa-star"></i></span>
+          <span>{{ course.rating|floatformat:1 }}</span>
+          <span class="mx-1 text-gray-400">•</span>
+          <span class="text-gray-500"><i class="far fa-comment mr-1"></i>{{ course.comments_count }}</span>
+        </div>
+        <p class="mt-2 text-gray-600 text-sm">{{ course.short_description }}</p>
+        <div class="mt-4">
+          <a href="{% url 'course_detail' course.id %}" class="text-sm px-4 py-1.5 bg-blue-600 text-white font-medium rounded hover:bg-blue-700 transition">
+            {% if course.purchased %}Access{% else %}Enroll{% endif %}
+          </a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+      <p class="text-gray-600 text-sm">No featured course available</p>
+    </div>
+    {% endif %}
+  </div>
 </section>
 
-<section class="py-12 bg-gray-50">
-    <div class="container mx-auto text-center">
-        <h2 class="text-3xl font-bold text-gray-800 mb-4">Why Choose Our Course?</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
-            <div class="bg-white p-6 rounded-lg shadow-sm">
-                <div class="text-blue-600 mb-4">
-                    <i class="fas fa-graduation-cap text-3xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Transformative Content</h3>
-                <p class="text-gray-600">Life-changing material designed to unlock your full potential.</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-sm">
-                <div class="text-blue-600 mb-4">
-                    <i class="fas fa-lock text-3xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Exclusive Community</h3>
-                <p class="text-gray-600">Private network of high-performing individuals.</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow-sm">
-                <div class="text-blue-600 mb-4">
-                    <i class="fas fa-chart-line text-3xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Proven Results</h3>
-                <p class="text-gray-600">Thousands have transformed their lives using our methods.</p>
-            </div>
-        </div>
+<section class="py-8 bg-gray-50">
+  <div class="container mx-auto px-4 text-center">
+    <h2 class="text-xl font-bold text-gray-800 mb-3">Why Choose Us?</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+      <div class="bg-white p-4 rounded shadow-sm">
+        <div class="text-blue-600 mb-2"><i class="fas fa-graduation-cap text-xl"></i></div>
+        <h3 class="text-base font-semibold mb-1">Transformative</h3>
+        <p class="text-gray-600 text-xs">Unlock your potential</p>
+      </div>
+      <div class="bg-white p-4 rounded shadow-sm">
+        <div class="text-blue-600 mb-2"><i class="fas fa-lock text-xl"></i></div>
+        <h3 class="text-base font-semibold mb-1">Exclusive</h3>
+        <p class="text-gray-600 text-xs">High-performers network</p>
+      </div>
+      <div class="bg-white p-4 rounded shadow-sm">
+        <div class="text-blue-600 mb-2"><i class="fas fa-chart-line text-xl"></i></div>
+        <h3 class="text-base font-semibold mb-1">Proven</h3>
+        <p class="text-gray-600 text-xs">Thousands transformed</p>
+      </div>
     </div>
+  </div>
 </section>
 
-<section class="py-12 bg-white">
-    <div class="container mx-auto text-center">
-        <h2 class="text-3xl font-bold text-gray-800 mb-4">Ready to begin your transformation?</h2>
-        <p class="text-xl text-gray-600 max-w-2xl mx-auto mb-8">Join our elite community of men who have taken control of their lives.</p>
-        {% if course %}
-        <a href="{% url 'course_detail' course.id %}" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
-            {% if course.purchased %}Continue Your Journey{% else %}Start Now{% endif %}
-        </a>
-        {% else %}
-        <a href="#" class="inline-block bg-gray-400 text-white px-8 py-3 rounded-lg font-semibold cursor-not-allowed">
-            Coming Soon
-        </a>
-        {% endif %}
-    </div>
+<section class="py-8 bg-white">
+  <div class="container mx-auto px-4 text-center">
+    <h2 class="text-xl font-bold text-gray-800 mb-2">Ready to begin?</h2>
+    <p class="text-gray-600 text-sm max-w-md mx-auto mb-4">Join our elite community.</p>
+    {% if course %}
+    <a href="{% url 'course_detail' course.id %}" class="inline-block text-sm px-6 py-2 bg-blue-600 text-white font-medium rounded hover:bg-blue-700 transition">
+      {% if course.purchased %}Continue{% else %}Start Now{% endif %}
+    </a>
+    {% else %}
+    <a href="#" class="inline-block text-sm px-6 py-2 bg-gray-400 text-white font-medium rounded cursor-not-allowed">Coming Soon</a>
+    {% endif %}
+  </div>
 </section>
 {% endblock %}
