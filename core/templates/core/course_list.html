@@ -22,9 +22,9 @@
         <div class="grid grid-cols-1 gap-4 justify-items-center">
             {% for course_data in courses_with_prices %}
             {% with course=course_data.course %}
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 w-full max-w-2xl flex">
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 w-full max-w-3xl flex h-40">
                 <!-- Course Image -->
-                <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-1/4 h-auto object-cover">
+                <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-1/4 h-full object-cover">
                 
                 <div class="p-3 flex flex-col justify-between w-3/4">
                     <!-- Course Title -->
