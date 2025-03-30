@@ -11,6 +11,7 @@ from django.views.decorators.http import require_http_methods, require_POST
 from .models import Course, CourseTier, UserCourse, CoursePrice, Currency
 from .forms import CheckoutForm, LoginForm, CustomUserCreationForm
 import requests
+from django.utils.decorators import method_decorator
 
 # Utility function to get tier prices
 def get_tier_prices(tier, currency_code='TZS'):
@@ -212,7 +213,7 @@ class UserLoginView(View):
                 messages.error(request, 'Invalid username or password.')
         return render(request, 'core/login.html', {'form': form})
 
-# Course list view
+@method_decorator(login_required, name='dispatch')
 class CourseListView(ListView):
     model = Course
     template_name = 'core/course_list.html'
