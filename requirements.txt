@@ -1,9 +1,9 @@
 asgiref==3.8.1
 certifi==2025.1.31
 charset-normalizer==3.4.1
-Django
 django-filter
-django-rest-framework
+Django==3.2.25
+djangorestframework<3.14
 idna==3.10
 pillow
 PyMySQL
