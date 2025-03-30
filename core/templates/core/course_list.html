@@ -5,7 +5,7 @@
 <div class="container mx-auto px-4 py-6 text-center">
     <!-- Centered Header -->
     <div class="flex flex-col items-center mb-8">
-        <nav class="flex flex-wrap justify-center gap-2 text-sm">
+        <nav class="flex flex-wrap justify-center gap-4">
             <a href="/" class="text-gray-700 hover:text-blue-600">Home</a>
             <a href="#" class="text-blue-600 font-semibold">Courses</a>
             <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link">Fitness Tools</a>
@@ -25,39 +25,39 @@
             <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 w-full max-w-3xl flex h-40">
                 <!-- Course Image -->
                 <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-1/4 h-full object-cover">
-            
-                <div class="p-3 flex flex-col justify-between w-3/4 overflow-hidden">
+                
+                <div class="p-3 flex flex-col justify-between w-3/4">
                     <!-- Course Title -->
-                    <h2 class="text-lg font-semibold mb-1 text-left truncate">{{ course.title }}</h2>
-            
+                    <h2 class="text-lg font-semibold mb-1 text-left">{{ course.title }}</h2>
+                    
                     <!-- Likes and Comments -->
                     <div class="flex items-center text-gray-500 text-xs mb-2">
-                        <span class="mr-3 truncate">
+                        <span class="mr-3">
                             <i class="far fa-thumbs-up mr-1"></i> {{ course.likes_count }} Likes
                         </span>
-                        <span class="truncate">
+                        <span>
                             <i class="far fa-comment mr-1"></i> {{ course.comments_count }} Comments
                         </span>
                     </div>
-            
+                    
                     <!-- Course Description -->
-                    <p class="text-gray-600 mb-3 text-left text-xs truncate">{{ course.short_description }}</p>
-            
+                    <p class="text-gray-600 mb-3 text-left text-xs">{{ course.short_description }}</p>
+                    
                     <!-- Buy/Preview Button -->
-                    <div class="text-center mt-auto">
-                        {% if course.purchased %}
-                            <a href="{% url 'course_detail' course.id %}" 
-                            class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-auto text-sm">
-                                Preview Course
-                            </a>
-                        {% else %}
-                            <a href="{% url 'course_detail' course.id %}" 
-                            class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-auto text-sm buy-button" 
-                            data-course-id="{{ course.id }}">
-                                Buy Course
-                            </a>
-                        {% endif %}
-                    </div>
+                <div class="text-center mt-auto">
+                    {% if course.purchased %}
+                        <a href="{% url 'course_detail' course.id %}" 
+                        class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium block w-full text-sm">
+                            Preview Course
+                        </a>
+                    {% else %}
+                        <a href="{% url 'course_detail' course.id %}" 
+                        class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium block w-full text-sm buy-button" 
+                        data-course-id="{{ course.id }}">
+                            Buy Course
+                        </a>
+                    {% endif %}
+                </div>
                 </div>
             </div>
             {% endwith %}
@@ -107,42 +107,6 @@
     .disabled-link {
         cursor: not-allowed;
         opacity: 0.6;
-    }
-    /* Ensure the button is always visible on smaller screens */
-    .buy-button {
-        position: relative; /* Default position */
-        width: auto; /* Adjust width based on content */
-        max-width: 100%; /* Ensure it doesn't exceed the container width */
-    }
-
-    @media (max-width: 640px) {
-        .buy-button {
-            position: fixed; /* Fix the button at the bottom of the screen */
-            bottom: 10px; /* Add some spacing from the bottom */
-            left: 10px; /* Add spacing from the left */
-            right: 10px; /* Add spacing from the right */
-            z-index: 50; /* Ensure it stays above other elements */
-        }
-    }
-    nav {
-        white-space: nowrap; /* Prevent wrapping */
-        overflow-x: auto; /* Allow horizontal scrolling if needed */
-    }
-    /* Ensure all content stays within the div */
-    .course-div {
-        display: flex;
-        flex-wrap: nowrap;
-        overflow: hidden;
-    }
-
-    .course-div img {
-        flex-shrink: 0; /* Prevent the image from shrinking */
-    }
-
-    .course-div-content {
-        overflow: hidden; /* Prevent content overflow */
-        text-overflow: ellipsis; /* Add ellipsis for overflowing text */
-        white-space: nowrap; /* Prevent text wrapping */
     }
 </style>
 
