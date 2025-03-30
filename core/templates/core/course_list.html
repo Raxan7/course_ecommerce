@@ -2,7 +2,7 @@
 {% block title %}Available Courses{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8 text-center">
+<div class="container mx-auto px-4 py-6 text-center">
     <!-- Centered Header -->
     <div class="flex flex-col items-center mb-8">
         <nav class="flex flex-wrap justify-center gap-4">
@@ -14,54 +14,89 @@
     </div>
 
     <!-- Centered Main Content -->
-    <div class="flex flex-col items-center mb-12">  <!-- Changed this div to flex-col and items-center -->
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Available Courses</h1>
+    <div class="flex flex-col items-center mb-10">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">Available Courses</h1>
         
-        <div class="flex-grow"></div> <!-- Added flex-grow to this div -->
+        <div class="flex-grow"></div>
         <!-- Centered Course Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+        <div class="grid grid-cols-1 gap-4 justify-items-center">
             {% for course_data in courses_with_prices %}
             {% with course=course_data.course %}
-            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 w-full max-w-sm">
-                <a href="{% url 'course_detail' course.id %}" class="block">
-                    <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-full h-48 object-cover mx-auto">
-                </a>
-                <div class="p-4 text-center">
-                    <h2 class="text-xl font-semibold mb-2">
-                        <a href="{% url 'course_detail' course.id %}" class="hover:text-blue-600">{{ course.title }}</a>
-                    </h2>
-                    <p class="text-gray-600 mb-3 px-2">{{ course.short_description }}</p>
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 w-full max-w-2xl flex">
+                <!-- Course Image -->
+                <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-1/4 h-auto object-cover">
+                
+                <div class="p-3 flex flex-col justify-between w-3/4">
+                    <!-- Course Title -->
+                    <h2 class="text-lg font-semibold mb-1 text-left">{{ course.title }}</h2>
                     
-                    <!-- Centered Rating -->
-                    <div class="flex items-center justify-center mb-3">
-                        <div class="flex text-yellow-400 mr-2">
-                            {% for i in "12345" %}
-                                {% if forloop.counter <= course.rating %}
-                                    <i class="fas fa-star text-sm"></i>
-                                {% else %}
-                                    <i class="far fa-star text-sm"></i>
-                                {% endif %}
-                            {% endfor %}
-                        </div>
-                        <span class="text-gray-500 text-sm">{{ course.comments_count }} reviews</span>
+                    <!-- Likes and Comments -->
+                    <div class="flex items-center text-gray-500 text-xs mb-2">
+                        <span class="mr-3">
+                            <i class="far fa-thumbs-up mr-1"></i> {{ course.likes_count }} Likes
+                        </span>
+                        <span>
+                            <i class="far fa-comment mr-1"></i> {{ course.comments_count }} Comments
+                        </span>
                     </div>
                     
-                    <!-- Centered Price -->
-                    <div class="flex flex-col items-center">
-                        <div class="mb-2">
-                            <span class="text-lg font-bold text-blue-600">TZS {{ course_data.price_tzs }}</span>
-                            <span class="text-sm text-gray-500 ml-2">≈ ${{ course_data.price_usd }}</span>
-                        </div>
-                        <a href="{% url 'course_detail' course.id %}" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium">
-                            Buy
-                        </a>
+                    <!-- Course Description -->
+                    <p class="text-gray-600 mb-3 text-left text-sm">{{ course.description }}</p>
+                    
+                    <!-- Buy/Preview Button -->
+                    <div class="text-center">
+                        {% if course.purchased %}
+                            <a href="{% url 'course_detail' course.id %}" class="bg-blue-600 text-white py-1 px-3 rounded hover:bg-blue-800 font-medium block w-full text-sm">
+                                Preview Course
+                            </a>
+                        {% else %}
+                            <a href="{% url 'course_detail' course.id %}" class="bg-blue-600 text-white py-1 px-3 rounded hover:bg-blue-800 font-medium block w-full text-sm buy-button" data-course-id="{{ course.id }}">
+                                Buy Course
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
             {% endwith %}
             {% endfor %}
         </div>
-        <div class="flex-grow"></div> <!-- Added flex-grow to this div -->
+        <div class="flex-grow"></div>
+    </div>
+
+    <!-- Hover Elements -->
+    <div id="hover-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <!-- Currency Selection -->
+        <div id="currency-selection" class="bg-white rounded-md p-4 max-w-xs w-full">
+            <h3 class="text-md font-semibold mb-3">Select Currency</h3>
+            <select id="currency" class="w-full p-1.5 border rounded text-sm mb-3">
+                <option value="TZS">TZS (Tanzanian Shilling)</option>
+                <option value="USD">USD ($)</option>
+                <option value="KES">KES (KSh)</option>
+                <option value="EUR">EUR (€)</option>
+            </select>
+            <button id="confirm-currency" class="w-full bg-blue-600 text-white py-1.5 rounded text-sm hover:bg-blue-700">
+                Confirm
+            </button>
+        </div>
+
+        <!-- Tier Selection -->
+        <div id="tier-selection" class="bg-white rounded-md p-4 max-w-md w-full hidden">
+            <h3 class="text-md font-semibold mb-3">Select a Tier</h3>
+            <div id="tiers-container" class="space-y-3">
+                <!-- Tiers will be dynamically populated here -->
+            </div>
+            <button id="confirm-tier" class="w-full bg-blue-600 text-white py-1.5 rounded text-sm hover:bg-blue-700 mt-3 hidden">
+                Confirm Tier
+            </button>
+        </div>
+
+        <!-- Action Confirmation -->
+        <div id="action-selection" class="bg-white rounded-md p-4 max-w-xs w-full hidden">
+            <h3 class="text-md font-semibold mb-3">Proceed with Action</h3>
+            <button id="buy-course" class="w-full bg-green-500 text-white py-1.5 rounded text-sm hover:bg-green-600 mb-2">
+                Buy Course
+            </button>
+        </div>
     </div>
 </div>
 
@@ -69,9 +104,6 @@
     .disabled-link {
         cursor: not-allowed;
         opacity: 0.6;
-    }
-    .fa-star {
-        margin-right: 1px;
     }
 </style>
 
@@ -81,6 +113,94 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(e) {
             e.preventDefault();
         });
+    });
+
+    const hoverContainer = document.getElementById('hover-container');
+    const currencySelection = document.getElementById('currency-selection');
+    const tierSelection = document.getElementById('tier-selection');
+    const actionSelection = document.getElementById('action-selection');
+    const confirmCurrency = document.getElementById('confirm-currency');
+    const confirmTier = document.getElementById('confirm-tier');
+    const tiersContainer = document.getElementById('tiers-container');
+    const buyButtons = document.querySelectorAll('.buy-button');
+
+    let selectedCourseId = null;
+    let selectedTierId = null;
+
+    buyButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            selectedCourseId = this.dataset.courseId;
+            hoverContainer.classList.remove('hidden');
+            currencySelection.classList.remove('hidden');
+            tierSelection.classList.add('hidden');
+            actionSelection.classList.add('hidden');
+        });
+    });
+
+    confirmCurrency.addEventListener('click', function() {
+        const currency = document.getElementById('currency').value;
+        fetch(`/api/get_course_tiers/${selectedCourseId}/?currency=${currency}`)
+            .then(response => response.json())
+            .then(data => {
+                // Populate tiers
+                tiersContainer.innerHTML = '';
+                data.tiers.forEach(tier => {
+                    const tierElement = document.createElement('div');
+                    tierElement.classList.add('border', 'rounded-md', 'p-3', 'text-sm', 'cursor-pointer', 'hover:bg-gray-100');
+                    tierElement.dataset.tierId = tier.id;
+                    tierElement.innerHTML = `
+                        <h4 class="font-semibold">${tier.name}</h4>
+                        <p class="text-gray-600 text-xs">${tier.description}</p>
+                        <p class="text-gray-800 font-medium">${tier.price}</p>
+                    `;
+                    tierElement.addEventListener('click', function() {
+                        document.querySelectorAll('#tiers-container div').forEach(el => el.classList.remove('bg-blue-50', 'border-blue-400'));
+                        this.classList.add('bg-blue-50', 'border-blue-400');
+                        selectedTierId = this.dataset.tierId;
+                        confirmTier.classList.remove('hidden');
+                    });
+                    tiersContainer.appendChild(tierElement);
+                });
+
+                currencySelection.classList.add('hidden');
+                tierSelection.classList.remove('hidden');
+            })
+            .catch(error => {
+                alert('Error fetching tiers. Please try again.');
+                console.error(error);
+            });
+    });
+
+    confirmTier.addEventListener('click', function() {
+        tierSelection.classList.add('hidden');
+        actionSelection.classList.remove('hidden');
+    });
+
+    document.getElementById('buy-course').addEventListener('click', function() {
+        fetch(`/api/buy_course/${selectedCourseId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: JSON.stringify({ tier_id: selectedTierId }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                hoverContainer.classList.add('hidden');
+            })
+            .catch(error => {
+                alert('Error processing purchase. Please try again.');
+                console.error(error);
+            });
+    });
+
+    hoverContainer.addEventListener('click', function(e) {
+        if (e.target === hoverContainer) {
+            hoverContainer.classList.add('hidden');
+        }
     });
 });
 </script>
