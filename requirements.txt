@@ -3,7 +3,7 @@ certifi==2025.1.31
 charset-normalizer==3.4.1
 Django==3.2.25
 django-filter==2.4.0
-djangorestframework==3.13.1
+djangorestframework==3.13.1  # Critical - last version with NullBooleanField
 idna==3.10
 pillow==10.4.0
 PyMySQL==1.1.1
