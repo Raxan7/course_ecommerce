@@ -44,18 +44,17 @@
                     <p class="text-gray-600 mb-3 text-left text-xs" style="font-size: 10px; margin-bottom: 1px;">{{ course.description }}</p>
                     
                     <!-- Buy/Preview Button -->
-                    <div class="text-center mt-auto">
-                        {% if course.purchased %}
-                            <a href="{% url 'course_detail' course.id %}" 
-                               class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium block w-auto text-sm">
+                    <div class="mt-auto">
+                        {% if course_data.purchased %}
+                            <button class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-full text-sm preview-button" 
+                                    data-course-id="{{ course.id }}">
                                 Preview Course
-                            </a>
+                            </button>
                         {% else %}
-                            <a href="{% url 'course_detail' course.id %}" 
-                               class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium block w-auto text-sm buy-button" 
-                               data-course-id="{{ course.id }}">
-                                Buy Course
-                            </a>
+                            <button class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-full text-sm buy-button" 
+                                    data-course-id="{{ course.id }}">
+                                Enroll
+                            </button>
                         {% endif %}
                     </div>
                 </div>
@@ -68,6 +67,14 @@
 
     <!-- Hover Elements -->
     <div id="hover-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <!-- Loader for Preview Course -->
+        <div id="preview-loader" class="bg-white rounded-md p-4 max-w-md w-full hidden text-center">
+            <div class="flex items-center justify-center mb-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+            <p class="text-gray-600 text-sm">Please wait while the course is loading...</p>
+        </div>
+
         <!-- Currency Selection -->
         <div id="currency-selection" class="bg-white rounded-md p-4 max-w-xs w-full">
             <h3 class="text-md font-semibold mb-3">Select Currency</h3>
@@ -100,6 +107,16 @@
                 Buy Course
             </button>
         </div>
+
+        <!-- Final Message -->
+        <div id="final-message" class="bg-white rounded-md p-4 max-w-md w-full hidden text-center">
+            <h3 class="text-md font-semibold mb-3">Processing...</h3>
+            <p id="countdown" class="text-gray-600 text-sm mb-3"></p>
+            <p id="success-message" class="text-gray-800 text-sm hidden">
+                Congratulations! You have been allocated to join alpha male class session starting 01/May/2025.
+                Stay close to our social networks for more updates. Thank you.
+            </p>
+        </div>
     </div>
 </div>
 
@@ -108,9 +125,17 @@
         cursor: not-allowed;
         opacity: 0.6;
     }
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 </style>
 
 <script>
+const csrfToken = "{{ csrf_token }}";
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.disabled-link').forEach(link => {
         link.addEventListener('click', function(e) {
@@ -119,13 +144,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     const hoverContainer = document.getElementById('hover-container');
+    const previewLoader = document.getElementById('preview-loader');
     const currencySelection = document.getElementById('currency-selection');
     const tierSelection = document.getElementById('tier-selection');
     const actionSelection = document.getElementById('action-selection');
+    const finalMessage = document.getElementById('final-message');
+    const countdownElement = document.getElementById('countdown');
+    const successMessage = document.getElementById('success-message');
     const confirmCurrency = document.getElementById('confirm-currency');
     const confirmTier = document.getElementById('confirm-tier');
     const tiersContainer = document.getElementById('tiers-container');
     const buyButtons = document.querySelectorAll('.buy-button');
+    const previewButtons = document.querySelectorAll('.preview-button');
 
     let selectedCourseId = null;
     let selectedTierId = null;
@@ -138,6 +168,26 @@ document.addEventListener('DOMContentLoaded', function() {
             currencySelection.classList.remove('hidden');
             tierSelection.classList.add('hidden');
             actionSelection.classList.add('hidden');
+            finalMessage.classList.add('hidden');
+            previewLoader.classList.add('hidden'); // Ensure preview loader is hidden
+        });
+    });
+
+    previewButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            hoverContainer.classList.remove('hidden');
+            previewLoader.classList.remove('hidden');
+            currencySelection.classList.add('hidden'); // Ensure currency selection does not show
+            tierSelection.classList.add('hidden');
+            actionSelection.classList.add('hidden');
+            finalMessage.classList.add('hidden');
+
+            // Simulate loading for 5 seconds
+            setTimeout(() => {
+                previewLoader.classList.add('hidden');
+                hoverContainer.classList.add('hidden');
+            }, 5000);
         });
     });
 
@@ -176,11 +226,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     confirmTier.addEventListener('click', function() {
-        tierSelection.classList.add('hidden');
-        actionSelection.classList.remove('hidden');
-    });
-
-    document.getElementById('buy-course').addEventListener('click', function() {
         fetch(`/api/buy_course/${selectedCourseId}/`, {
             method: 'POST',
             headers: {
@@ -191,14 +236,34 @@ document.addEventListener('DOMContentLoaded', function() {
         })
             .then(response => response.json())
             .then(data => {
-                alert(data.message);
-                hoverContainer.classList.add('hidden');
+                if (data.success) {
+                    showFinalMessage();
+                } else {
+                    alert(data.error || 'Error processing purchase. Please try again.');
+                }
             })
             .catch(error => {
                 alert('Error processing purchase. Please try again.');
                 console.error(error);
             });
     });
+
+    function showFinalMessage() {
+        tierSelection.classList.add('hidden');
+        finalMessage.classList.remove('hidden');
+        let countdown = 3;
+        countdownElement.textContent = `Wait for scheduling of starting date of your class session in ${countdown} seconds`;
+        const interval = setInterval(() => {
+            countdown -= 1;
+            if (countdown > 0) {
+                countdownElement.textContent = `Wait for scheduling of starting date of your class session in ${countdown} seconds`;
+            } else {
+                clearInterval(interval);
+                countdownElement.classList.add('hidden');
+                successMessage.classList.remove('hidden');
+            }
+        }, 1000);
+    }
 
     hoverContainer.addEventListener('click', function(e) {
         if (e.target === hoverContainer) {

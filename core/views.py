@@ -55,8 +55,8 @@ def home(request):
             'title': featured_course.title if featured_course else None,
             'image': featured_course.image if featured_course else None,
             'short_description': featured_course.short_description if featured_course else None,
-            'rating': featured_course.rating if featured_course else 0,
-            'comment_count': featured_course.comments_count if featured_course else 0,
+            'rating': featured_course.rating if featured_course else None,
+            'comment_count': featured_course.comments_count if featured_course else None,
             'purchased': purchased,
             'tier': featured_tier,
             'price_tzs': get_tier_prices(featured_tier, 'TZS') if featured_tier else None,
@@ -66,36 +66,6 @@ def home(request):
         } if featured_course else None
     }
     return render(request, 'core/index.html', context)
-
-@login_required
-def course_detail(request, id):
-    course = get_object_or_404(Course, pk=id)
-    purchased = UserCourse.objects.filter(user=request.user, course=course).exists()
-    
-    # Get all tiers available for this course
-    tiers = course.available_tiers.all().order_by('order')
-    
-    # If no specific tiers are set, get all tiers (fallback)
-    if not tiers.exists():
-        tiers = CourseTier.objects.all().order_by('order')
-    
-    tier_data = []
-    for tier in tiers:
-        tier_data.append({
-            'tier': tier,
-            'price_tzs': get_tier_prices(tier, 'TZS'),
-            'price_usd': get_tier_prices(tier, 'USD'),
-            'price_kes': get_tier_prices(tier, 'KES'),
-            'price_eur': get_tier_prices(tier, 'EUR'),
-        })
-
-    context = {
-        'course': course,
-        'tiers': tier_data,
-        'current_tier': course.tier,  # or get from request.GET if you want to change tiers
-        'purchased': purchased,
-    }
-    return render(request, 'core/course_detail.html', context)
 
 # Course checkout view
 class CourseCheckoutView(View):
@@ -233,11 +203,13 @@ class CourseListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Add prices to each course
+        # Add prices and purchase status to each course
         courses_with_prices = []
         for course in context['courses']:
+            purchased = UserCourse.objects.filter(user=self.request.user, course=course).exists()
             course_data = {
                 'course': course,
+                'purchased': purchased,
                 'price_tzs': get_tier_prices(course.tier, 'TZS'),
                 'price_usd': get_tier_prices(course.tier, 'USD'),
                 'price_kes': get_tier_prices(course.tier, 'KES'),
@@ -251,8 +223,10 @@ class CourseListView(ListView):
         featured_courses = Course.objects.filter(featured=True)[:5]
         featured_with_prices = []
         for course in featured_courses:
+            purchased = UserCourse.objects.filter(user=self.request.user, course=course).exists()
             featured_with_prices.append({
                 'course': course,
+                'purchased': purchased,
                 'price_tzs': get_tier_prices(course.tier, 'TZS'),
                 'price_usd': get_tier_prices(course.tier, 'USD'),
             })

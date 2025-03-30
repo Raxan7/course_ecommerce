@@ -19,7 +19,7 @@ urlpatterns = [
     path('courses/', views.CourseListView.as_view(), name='course_list'),
     path('checkout/<int:course_id>/', views.CourseCheckoutView.as_view(), name='checkout'),
 
-    path('course/<int:id>/', views.course_detail, name='course_detail'),
+    # Removed course_detail URL
 
     # Authentication URLs
     path('register/', views.register, name='register'),
