@@ -46,10 +46,9 @@
                     <!-- Buy/Preview Button -->
                     <div class="mt-auto">
                         {% if course_data.purchased %}
-                            <button class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-full text-sm preview-button" 
-                                    data-course-id="{{ course.id }}">
+                            <a href="{% url 'course_content' %}" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-full text-sm text-center">
                                 Preview
-                            </button>
+                            </a>
                         {% else %}
                             <button class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-full text-sm buy-button" 
                                     data-course-id="{{ course.id }}">
@@ -106,16 +105,6 @@
             <button id="buy-course" class="w-full bg-green-500 text-white py-1.5 rounded text-sm hover:bg-green-600 mb-2">
                 Buy Course
             </button>
-        </div>
-
-        <!-- Final Message -->
-        <div id="final-message" class="bg-white rounded-md p-4 max-w-md w-full hidden text-center">
-            <h3 class="text-md font-semibold mb-3">Processing...</h3>
-            <p id="countdown" class="text-gray-600 text-sm mb-3"></p>
-            <p id="success-message" class="text-gray-800 text-sm hidden">
-                Congratulations! You have been allocated to join alpha male class session starting 01/May/2025.
-                Stay close to our social networks for more updates. Thank you.
-            </p>
         </div>
     </div>
 
@@ -273,8 +262,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 countdownElement.textContent = `Wait for scheduling of starting date of your class session in ${countdown} seconds`;
             } else {
                 clearInterval(interval);
-                countdownElement.classList.add('hidden');
-                successMessage.classList.remove('hidden');
+                window.location.href = `{% url 'course_content' %}`;
             }
         }, 1000);
     }

@@ -8,19 +8,46 @@
 <section class="bg-gray-100 py-8">
   <div class="container mx-auto px-4">
     <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">Trending Courses</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <!-- Example product card -->
-      <div class="bg-white shadow-lg rounded-lg overflow-hidden transform hover:scale-105 transition duration-300 col-span-3 flex flex-col items-center bg-gray-50">
-        <div class="p-6 text-center">
-          <h3 class="text-xl font-semibold mb-3 text-gray-800">Alpha Males Class</h3>
-          <p class="text-gray-600 mb-4">Unlock the secrets to mastering confidence, dominance, and peak performance in every aspect of life.</p>
-          <a href="{% url 'course_list' %}">
-            <button class="bg-blue-500 text-white px-5 py-2 rounded-full hover:bg-blue-600 transition duration-300">
-              Buy Course
-            </button>
-          </a>
+      <!-- Centered Main Content -->
+        
+        <div class="flex-grow hidden md:block"></div>
+        <!-- Centered Course Grid -->
+        <div class="grid grid-cols-1 gap-4 justify-items-center">
+            {% for course_data in courses_with_prices %}
+            {% with course=course_data.course %}
+            <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 w-full sm:max-w-3xl flex h-40">
+                <!-- Course Image -->
+                <img src="{{ course.image.url }}" alt="{{ course.title }}" class="w-1/4 h-full object-cover">
+                
+                <div class="p-3 flex flex-col justify-between w-3/4">
+                    <!-- Course Title -->
+                    <h2 class="text-lg font-semibold mb-1 text-left">{{ course.title }}</h2>
+                    
+                    <!-- Likes and Comments -->
+                    <div class="flex items-center text-gray-500 text-xs mb-2">
+                        <span class="mr-3">
+                            <i class="far fa-thumbs-up mr-1"></i> {{ course.likes_count }} Likes
+                        </span>
+                        <span>
+                            <i class="far fa-comment mr-1"></i> {{ course.comments_count }} Comments
+                        </span>
+                    </div>
+                    
+                    <!-- Course Description -->
+                    <p class="text-gray-600 mb-3 text-left text-xs" style="font-size: 10px; margin-bottom: 1px;">{{ course.description }}</p>
+                    
+                    <!-- Enroll Button -->
+                    <div class="mt-auto">
+                        <a href="{% url 'course_list' %}" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-full text-sm text-center">
+                            Enroll
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endwith %}
+            {% endfor %}
         </div>
-      </div>
+        <div class="flex-grow hidden md:block"></div>
     </div>
     <!-- New content -->
     <div class="mt-8 text-center">

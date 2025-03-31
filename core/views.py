@@ -48,6 +48,14 @@ def home(request):
     if request.user.is_authenticated and featured_course:
         purchased = UserCourse.objects.filter(user=request.user, course=featured_course).exists()
 
+    courses_with_prices = [
+        {
+            'course': course,
+            'purchased': request.user.is_authenticated and course in request.user.purchased_courses.all()
+        }
+        for course in Course.objects.all()
+    ]
+
     context = {
         'tiers': tier_data,
         'featured_course': {
@@ -63,7 +71,8 @@ def home(request):
             'price_usd': get_tier_prices(featured_tier, 'USD') if featured_tier else None,
             'price_kes': get_tier_prices(featured_tier, 'KES') if featured_tier else None,
             'price_eur': get_tier_prices(featured_tier, 'EUR') if featured_tier else None,
-        } if featured_course else None
+        } if featured_course else None,
+        'courses_with_prices': courses_with_prices,
     }
     return render(request, 'core/index.html', context)
 
@@ -234,3 +243,6 @@ class CourseListView(ListView):
         context['featured_courses'] = featured_with_prices
         
         return context
+
+def course_content(request):
+    return render(request, 'core/course_content.html')

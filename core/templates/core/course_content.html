@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Course Content{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6 flex justify-center items-center min-h-screen">
+    <div id="final-message" class="bg-white rounded-md p-4 max-w-md w-full text-center">
+        <p id="countdown" class="text-gray-600 text-sm mb-3"></p>
+        <p id="success-message" class="text-gray-800 text-sm">
+            Congratulations! You have been allocated to join alpha male class session starting 01/May/2025.
+            Stay close to our social networks for more updates. Thank you.
+        </p>
+        <a href="{% url 'course_list' %}" class="text-blue-500 hover:underline mt-4 block">Go back to courses</a>
+    </div>
+</div>
+{% endblock %}
