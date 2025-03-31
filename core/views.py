@@ -51,7 +51,6 @@ def home(request):
     courses_with_prices = [
         {
             'course': course,
-            'purchased': request.user.is_authenticated and course in request.user.purchased_courses.all()
         }
         for course in Course.objects.all()
     ]
