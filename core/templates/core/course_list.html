@@ -6,10 +6,10 @@
     <!-- Centered Header -->
     <div class="flex flex-col items-center mb-8">
         <nav class="flex flex-wrap justify-center gap-2 text-sm">
-            <a href="/" class="text-gray-700 hover:text-blue-600">Home</a>
+            <a href="{% url 'course_list' %}" class="text-gray-700 hover:text-blue-600">Home</a>
             <a href="#" class="text-blue-600 font-semibold">Courses</a>
-            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link">Fitness Tools</a>
-            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link">Cosmetics</a>
+            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link coming-soon-link">Fitness Tools</a>
+            <a href="#" class="text-gray-700 hover:text-blue-600 disabled-link coming-soon-link">Cosmetics</a>
         </nav>
     </div>
 
@@ -48,7 +48,7 @@
                         {% if course_data.purchased %}
                             <button class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-full text-sm preview-button" 
                                     data-course-id="{{ course.id }}">
-                                Preview Course
+                                Preview
                             </button>
                         {% else %}
                             <button class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-800 font-medium w-full text-sm buy-button" 
@@ -118,6 +118,14 @@
             </p>
         </div>
     </div>
+
+    <!-- Add Coming Soon Message Container with Countdown -->
+    <div id="coming-soon-message" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-md p-4 max-w-xs w-full text-center">
+            <p class="text-gray-800 text-sm font-semibold">Coming Soon</p>
+            <p id="coming-soon-countdown" class="text-gray-600 text-xs mt-2">Closing in 3 seconds...</p>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -156,6 +164,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const tiersContainer = document.getElementById('tiers-container');
     const buyButtons = document.querySelectorAll('.buy-button');
     const previewButtons = document.querySelectorAll('.preview-button');
+    const comingSoonLinks = document.querySelectorAll('.coming-soon-link');
+    const comingSoonMessage = document.getElementById('coming-soon-message');
+    const comingSoonCountdown = document.getElementById('coming-soon-countdown');
 
     let selectedCourseId = null;
     let selectedTierId = null;
@@ -238,6 +249,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     showFinalMessage();
+                    setTimeout(() => {
+                        location.reload(); // Reload the page after successful purchase
+                    }, 3000); // Delay to allow the final message to display
                 } else {
                     alert(data.error || 'Error processing purchase. Please try again.');
                 }
@@ -269,6 +283,25 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target === hoverContainer) {
             hoverContainer.classList.add('hidden');
         }
+    });
+
+    comingSoonLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            comingSoonMessage.classList.remove('hidden');
+            let countdown = 3;
+            comingSoonCountdown.textContent = `Closing in ${countdown} seconds...`;
+
+            const interval = setInterval(() => {
+                countdown -= 1;
+                if (countdown > 0) {
+                    comingSoonCountdown.textContent = `Closing in ${countdown} seconds...`;
+                } else {
+                    clearInterval(interval);
+                    comingSoonMessage.classList.add('hidden');
+                }
+            }, 1000);
+        });
     });
 });
 </script>

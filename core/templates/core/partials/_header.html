@@ -1,11 +1,13 @@
+{% load static %}
 <header class="bg-white shadow-sm sticky top-0 z-50">
     <div class="container mx-auto px-4">
         <div class="flex justify-between items-center py-4">
             <div class="flex items-center">
-                <a href="{% url 'home' %}" class="text-2xl font-bold text-blue-600 flex items-center">
-                    <span class="mr-2 text-blue-600 font-bold">U</span>
-                    TheUni
+                <a href="{% if user.is_authenticated %}{% url 'course_list' %}{% else %}{% url 'home' %}{% endif %}" class="text-2xl font-bold text-blue-600 flex items-center">
+                    <img src="{% static 'core/images/logo.jpg' %}" alt="Logo" class="h-8">
+                    ni
                 </a>
+                
             </div>
             
             <div class="hidden md:flex items-center space-x-8">
