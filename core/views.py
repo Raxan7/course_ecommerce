@@ -8,10 +8,16 @@ from django.http import JsonResponse, HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods, require_POST
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.urls import reverse
 from .models import Course, CourseTier, UserCourse, CoursePrice, Currency
 from .forms import CheckoutForm, LoginForm, CustomUserCreationForm
-import requests
-from django.utils.decorators import method_decorator
+from .pesapal import PesaPal
+from decimal import Decimal
+import json
+import uuid
+from django.core.serializers.json import DjangoJSONEncoder
 
 # Utility function to get tier prices
 def get_tier_prices(tier, currency_code='TZS'):
@@ -75,47 +81,218 @@ def home(request):
     }
     return render(request, 'core/index.html', context)
 
-# Course checkout view
+import sys
+from django.views import View
+from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
+from django.urls import reverse
+from .models import Course, CourseTier
+from .pesapal import PesaPal
+import uuid
+
+def debug_print(message):
+    """Print debug messages to terminal with timestamp"""
+    from datetime import datetime
+    print(f"[{datetime.now()}] DEBUG: {message}", file=sys.stderr)
+
 class CourseCheckoutView(View):
     def post(self, request, course_id):
-        form = CheckoutForm(request.POST)
-        if form.is_valid():
-            try:
-                course = Course.objects.get(id=course_id)
-                tier = course.tier
-                currency = form.cleaned_data.get('currency', 'TZS')
-                price = get_tier_prices(tier, currency)
-                
-                # Pesapal payment integration
-                pesapal_url = "https://www.pesapal.com/API/PostPesapalDirectOrderV4"
-                payload = {
-                    'Amount': price,
-                    'Description': f'Payment for {course.title} ({tier.get_name_display()})',
-                    'Type': 'MERCHANT',
-                    'Reference': f'course-{course.id}-{request.user.id}',
-                    'FirstName': request.user.first_name,
-                    'LastName': request.user.last_name,
-                    'Email': request.user.email,
-                    'Currency': currency,
+        try:
+            debug_print(f"=== Starting checkout process for course_id: {course_id} ===")
+            
+            # Get course and validate input
+            debug_print("1. Fetching course from database...")
+            course = get_object_or_404(Course, id=course_id)
+            debug_print(f"   Found course: {course.title} (ID: {course.id})")
+            
+            tier_id = request.POST.get('tier_id')
+            currency = request.POST.get('currency', 'TZS')
+            debug_print(f"2. Received parameters - tier_id: {tier_id}, currency: {currency}")
+            
+            if not tier_id:
+                debug_print("   ERROR: No tier_id provided!")
+                messages.error(request, 'Please select a tier')
+                return redirect('course_list')
+            
+            debug_print("3. Fetching tier from database...")
+            tier = get_object_or_404(CourseTier, id=tier_id)
+            debug_print(f"   Found tier: {tier.get_name_display()} (ID: {tier.id})")
+            
+            debug_print("4. Getting price for selected currency...")
+            price = get_tier_prices(tier, currency)
+            debug_print(f"   Price retrieved: {price}")
+            
+            if not price:
+                debug_print(f"   ERROR: No price available for currency: {currency}")
+                messages.error(request, 'Price not available for selected currency')
+                return redirect('course_list')
+            
+            # Initialize PesaPal
+            debug_print("5. Initializing PesaPal service...")
+            pesapal = PesaPal()
+            
+            # Register IPN
+            debug_print("6. Registering IPN URL with PesaPal...")
+            ipn_id = pesapal.register_ipn_url()
+            debug_print(f"   Received IPN ID: {ipn_id}")
+            
+            if not ipn_id:
+                debug_print("   ERROR: Failed to register IPN URL!")
+                messages.error(request, 'Payment service unavailable. Please try again later.')
+                return redirect('course_list')
+            
+            # Generate unique order ID
+            order_id = f"COURSE-{course.id}-{uuid.uuid4().hex[:8]}"
+            debug_print(f"7. Generated order ID: {order_id}")
+            
+            # Prepare order details
+            callback_url = request.build_absolute_uri(reverse('pesapal_callback'))
+            cancellation_url = request.build_absolute_uri(reverse('course_list'))
+            
+            debug_print("8. Building order details:")
+            debug_print(f"   - Callback URL: {callback_url}")
+            debug_print(f"   - Cancellation URL: {cancellation_url}")
+            
+            order_details = {
+                'id': order_id[:50],
+                'currency': currency,
+                'amount': str(price),
+                'description': f"Payment for {course.title} ({tier.get_name_display()})"[:100],
+                'callback_url': callback_url,
+                'cancellation_url': cancellation_url,
+                'notification_id': ipn_id,
+                'billing_address': {
+                    'email_address': request.user.email,
+                    'phone_number': request.user.profile.phone or '',
+                    'country_code': (request.user.profile.country_code)[1:] or 'TZ',
+                    'first_name': request.user.first_name or '',
+                    'last_name': request.user.last_name or '',
                 }
-                headers = {
-                    'Authorization': f'Bearer {settings.PESAPAL_API_KEY}',
-                    'Content-Type': 'application/json',
-                }
-                response = requests.post(pesapal_url, json=payload, headers=headers)
-                if response.status_code == 200:
-                    UserCourse.objects.create(
-                        user=request.user, 
-                        course=course,
-                        tier=tier
-                    )
-                    messages.success(request, 'Payment successful. You are now enrolled.')
-                    return redirect('course_detail', id=course.id)
+            }
+            
+            debug_print("9. Complete order details:")
+            for key, value in order_details.items():
+                if key != 'billing_address':
+                    debug_print(f"   {key}: {value}")
                 else:
-                    messages.error(request, 'Payment failed. Please try again.')
-            except requests.RequestException:
-                messages.error(request, 'Payment failed. Please try again.')
-        return redirect('checkout', course_id=course_id)
+                    debug_print("   billing_address:")
+                    for subkey, subvalue in value.items():
+                        debug_print(f"     {subkey}: {subvalue}")
+            
+            # Submit order to PesaPal
+            debug_print("10. Submitting order to PesaPal...")
+            response = pesapal.submit_order_request(order_details)
+            debug_print(f"   PesaPal response: {response}")
+            
+            if response and 'redirect_url' in response:
+                debug_print("11. Order submitted successfully!")
+                debug_print(f"   Redirect URL: {response['redirect_url']}")
+                
+                # Store minimal data in session
+                session_data = {
+                    'order_id': order_id,
+                    'course_id': course.id,
+                    'tier_id': tier.id,
+                }
+                debug_print("12. Storing in session:")
+                for key, value in session_data.items():
+                    debug_print(f"   {key}: {value}")
+                
+                request.session['pesapal_order'] = session_data
+                request.session.modified = True
+                debug_print("13. Session updated successfully")
+                
+                # Redirect to PesaPal payment page
+                debug_print(f"14. Redirecting to PesaPal payment page")
+                return redirect(response['redirect_url'])
+            else:
+                error_msg = response.get('error', {}).get('message', 'Payment initialization failed') if response else 'Payment service unavailable'
+                debug_print(f"   ERROR: Payment submission failed - {error_msg}")
+                messages.error(request, error_msg)
+                return redirect('course_list')
+                
+        except Exception as e:
+            debug_print(f"!!! EXCEPTION !!!")
+            debug_print(f"Type: {type(e).__name__}")
+            debug_print(f"Message: {str(e)}")
+            debug_print("Stack trace:")
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+            
+            messages.error(request, f'An error occurred: {str(e)}')
+            return redirect('course_list')
+        
+
+# Add these new views for PesaPal callbacks
+def pesapal_callback(request):
+    """Handle PesaPal callback after payment"""
+    order_tracking_id = request.GET.get('OrderTrackingId')
+    if not order_tracking_id:
+        messages.error(request, 'Invalid payment callback')
+        return redirect('course_list')
+    
+    # Verify payment status with PesaPal
+    pesapal = PesaPal()
+    status_response = pesapal.get_transaction_status(order_tracking_id)
+    
+    if status_response and status_response.get('payment_status') == 'COMPLETED':
+        try:
+            # Get order details from session
+            order_details = request.session.get('pesapal_order', {})
+            if not order_details:
+                messages.error(request, 'Session expired. Please contact support.')
+                return redirect('course_list')
+            
+            course = get_object_or_404(Course, id=order_details['course_id'])
+            tier = get_object_or_404(CourseTier, id=order_details['tier_id'])
+            
+            # Create enrollment if not already exists
+            UserCourse.objects.get_or_create(
+                user=request.user,
+                course=course,
+                tier=tier,
+                defaults={'purchased_at': timezone.now()}
+            )
+            
+            # Clear session
+            if 'pesapal_order' in request.session:
+                del request.session['pesapal_order']
+            
+            messages.success(request, 'Payment successful! You are now enrolled in the course.')
+            return redirect('course_content')
+            
+        except Exception as e:
+            messages.error(request, f'Error processing your enrollment: {str(e)}')
+            return redirect('course_list')
+    else:
+        status = status_response.get('payment_status', 'UNKNOWN') if status_response else 'UNKNOWN'
+        messages.error(request, f'Payment not completed. Status: {status}')
+        return redirect('course_list')
+    
+
+@csrf_exempt
+def pesapal_ipn(request):
+    """Handle Instant Payment Notification from PesaPal"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            order_tracking_id = data.get('OrderNotification', {}).get('OrderTrackingId')
+            
+            if order_tracking_id:
+                # Verify payment status
+                pesapal = PesaPal()
+                status_response = pesapal.get_transaction_status(order_tracking_id)
+                
+                if status_response and status_response.get('payment_status') == 'COMPLETED':
+                    # Here you would typically update your database
+                    # You might want to store the IPN notification for auditing
+                    pass
+                    
+        except Exception as e:
+            print(f"Error processing IPN: {str(e)}")
+    
+    return JsonResponse({'status': 'ok'})
+
 
 # Logout view
 @require_POST

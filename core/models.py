@@ -111,3 +111,15 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.user.username}'s {self.rating}-star review for {self.course.title} ({self.tier.get_name_display()})"
+    
+
+class PaymentStatus(models.Model):
+    order_id = models.CharField(max_length=50, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    tier = models.ForeignKey(CourseTier, on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3)
+    status = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)

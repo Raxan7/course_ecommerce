@@ -34,4 +34,8 @@ urlpatterns = [
     path('api/get_course_tiers/<int:course_id>/', api_views.get_course_tiers, name='get_course_tiers'),
 
     path('course/content/', views.course_content, name='course_content'),
+
+    # PesaPal URLs
+    path('pesapal/callback/', views.pesapal_callback, name='pesapal_callback'),
+    path('pesapal/ipn/', views.pesapal_ipn, name='pesapal_ipn'),
 ]

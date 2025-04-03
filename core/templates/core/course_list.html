@@ -225,30 +225,61 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
 
+    // Update your existing JavaScript to handle the payment flow
     confirmTier.addEventListener('click', function() {
-        fetch(`/api/buy_course/${selectedCourseId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}',
-            },
-            body: JSON.stringify({ tier_id: selectedTierId }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showFinalMessage();
-                    setTimeout(() => {
-                        location.reload(); // Reload the page after successful purchase
-                    }, 3000); // Delay to allow the final message to display
-                } else {
-                    alert(data.error || 'Error processing purchase. Please try again.');
-                }
-            })
-            .catch(error => {
-                alert('Error processing purchase. Please try again.');
-                console.error(error);
-            });
+        const currency = document.getElementById('currency').value;
+        
+        if (!selectedTierId) {
+            alert('Please select a tier first');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('tier_id', selectedTierId);
+        formData.append('currency', currency);
+        formData.append('csrfmiddlewaretoken', csrfToken);
+
+        // Show loading state
+        const buyButton = document.getElementById('confirm-tier');
+        const originalText = buyButton.textContent;
+        buyButton.disabled = true;
+        buyButton.innerHTML = '<span class="animate-spin inline-block mr-2">↻</span> Processing...';
+
+        // Create a hidden form and submit it instead of using fetch
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/checkout/${selectedCourseId}/`;
+        form.style.display = 'none';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        // Add tier_id
+        const tierInput = document.createElement('input');
+        tierInput.type = 'hidden';
+        tierInput.name = 'tier_id';
+        tierInput.value = selectedTierId;
+        form.appendChild(tierInput);
+        
+        // Add currency
+        const currencyInput = document.createElement('input');
+        currencyInput.type = 'hidden';
+        currencyInput.name = 'currency';
+        currencyInput.value = currency;
+        form.appendChild(currencyInput);
+        
+        // Add to DOM and submit
+        document.body.appendChild(form);
+        form.submit();
+        
+        // Clean up after a short delay
+        setTimeout(() => {
+            document.body.removeChild(form);
+        }, 1000);
     });
 
     function showFinalMessage() {
