@@ -78,26 +78,26 @@ WSGI_APPLICATION = 'course_ecommerce.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'useuulkn_main_database',  # Change this to your cPanel database name
-        'USER': 'useuulkn_admin_user',    # Change this to your cPanel database username
-        'PASSWORD': 'p};Ju^%AY&]h',  # Change this to your cPanel database password
-        'HOST': 'localhost',  # Change this if using a remote MySQL host
-        'PORT': '3306',       # Default MySQL port
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'useuulkn_main_database',  # Change this to your cPanel database name
+#         'USER': 'useuulkn_admin_user',    # Change this to your cPanel database username
+#         'PASSWORD': 'p};Ju^%AY&]h',  # Change this to your cPanel database password
+#         'HOST': 'localhost',  # Change this if using a remote MySQL host
+#         'PORT': '3306',       # Default MySQL port
+#         'OPTIONS': {
+#             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+#         }
+#     }
+# }
 
 
 
@@ -138,6 +138,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # Added STATIC_ROOT for collected static files
 
+print(STATIC_ROOT)
 # Add media file configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -185,3 +186,14 @@ LOGIN_REDIRECT_URL = 'course_list'
 #         },
 #     },
 # }
+
+# PesaPal Sandbox Settings
+PESAPAL_SANDBOX = True  # Set to False for production
+PESAPAL_CONSUMER_KEY = 'ngW+UEcnDhltUc5fxPfrCD987xMh3Lx8'
+PESAPAL_CONSUMER_SECRET = 'q27RChYs5UkypdcNYKzuUw460Dg='
+PESAPAL_API_ENDPOINT = 'https://cybqa.pesapal.com/pesapalv3' if PESAPAL_SANDBOX else 'https://pay.pesapal.com/v3'
+PESAPAL_CALLBACK_URL = 'https://useuniservices.com/pesapal/callback/'
+PESAPAL_IPN_URL = 'https://useuniservices.com/pesapal/ipn/'
+
+# Add to your settings.py
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
