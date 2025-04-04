@@ -134,20 +134,12 @@
 <script>
 const csrfToken = "{{ csrf_token }}";
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.disabled-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-        });
-    });
-
+    // Only initialize elements that exist
     const hoverContainer = document.getElementById('hover-container');
     const previewLoader = document.getElementById('preview-loader');
     const currencySelection = document.getElementById('currency-selection');
     const tierSelection = document.getElementById('tier-selection');
     const actionSelection = document.getElementById('action-selection');
-    const finalMessage = document.getElementById('final-message');
-    const countdownElement = document.getElementById('countdown');
-    const successMessage = document.getElementById('success-message');
     const confirmCurrency = document.getElementById('confirm-currency');
     const confirmTier = document.getElementById('confirm-tier');
     const tiersContainer = document.getElementById('tiers-container');
@@ -157,171 +149,171 @@ document.addEventListener('DOMContentLoaded', function() {
     const comingSoonMessage = document.getElementById('coming-soon-message');
     const comingSoonCountdown = document.getElementById('coming-soon-countdown');
 
+    // Remove references to non-existent elements
+    // const finalMessage = document.getElementById('final-message');
+    // const countdownElement = document.getElementById('countdown');
+    // const successMessage = document.getElementById('success-message');
+
     let selectedCourseId = null;
     let selectedTierId = null;
 
-    buyButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            selectedCourseId = this.dataset.courseId;
-            hoverContainer.classList.remove('hidden');
-            currencySelection.classList.remove('hidden');
-            tierSelection.classList.add('hidden');
-            actionSelection.classList.add('hidden');
-            finalMessage.classList.add('hidden');
-            previewLoader.classList.add('hidden'); // Ensure preview loader is hidden
-        });
-    });
-
-    previewButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            hoverContainer.classList.remove('hidden');
-            previewLoader.classList.remove('hidden');
-            currencySelection.classList.add('hidden'); // Ensure currency selection does not show
-            tierSelection.classList.add('hidden');
-            actionSelection.classList.add('hidden');
-            finalMessage.classList.add('hidden');
-
-            // Simulate loading for 5 seconds
-            setTimeout(() => {
-                previewLoader.classList.add('hidden');
-                hoverContainer.classList.add('hidden');
-            }, 5000);
-        });
-    });
-
-    confirmCurrency.addEventListener('click', function() {
-        const currency = document.getElementById('currency').value;
-        fetch(`/api/get_course_tiers/${selectedCourseId}/?currency=${currency}`)
-            .then(response => response.json())
-            .then(data => {
-                // Populate tiers
-                tiersContainer.innerHTML = '';
-                data.tiers.forEach(tier => {
-                    const tierElement = document.createElement('div');
-                    tierElement.classList.add('border', 'rounded-md', 'p-3', 'text-sm', 'cursor-pointer', 'hover:bg-gray-100');
-                    tierElement.dataset.tierId = tier.id;
-                    tierElement.innerHTML = `
-                        <h4 class="font-semibold">${tier.name}</h4>
-                        <p class="text-gray-600 text-xs">${tier.description}</p>
-                        <p class="text-gray-800 font-medium">${tier.price}</p>
-                    `;
-                    tierElement.addEventListener('click', function() {
-                        document.querySelectorAll('#tiers-container div').forEach(el => el.classList.remove('bg-blue-50', 'border-blue-400'));
-                        this.classList.add('bg-blue-50', 'border-blue-400');
-                        selectedTierId = this.dataset.tierId;
-                        confirmTier.classList.remove('hidden');
-                    });
-                    tiersContainer.appendChild(tierElement);
-                });
-
-                currencySelection.classList.add('hidden');
-                tierSelection.classList.remove('hidden');
-            })
-            .catch(error => {
-                alert('Error fetching tiers. Please try again.');
-                console.error(error);
+    if (buyButtons) {
+        buyButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                selectedCourseId = this.dataset.courseId;
+                if (hoverContainer) hoverContainer.classList.remove('hidden');
+                if (currencySelection) currencySelection.classList.remove('hidden');
+                if (tierSelection) tierSelection.classList.add('hidden');
+                if (actionSelection) actionSelection.classList.add('hidden');
+                if (previewLoader) previewLoader.classList.add('hidden');
             });
-    });
-
-    // Update your existing JavaScript to handle the payment flow
-    confirmTier.addEventListener('click', function() {
-        const currency = document.getElementById('currency').value;
-        
-        if (!selectedTierId) {
-            alert('Please select a tier first');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('tier_id', selectedTierId);
-        formData.append('currency', currency);
-        formData.append('csrfmiddlewaretoken', csrfToken);
-
-        // Show loading state
-        const buyButton = document.getElementById('confirm-tier');
-        const originalText = buyButton.textContent;
-        buyButton.disabled = true;
-        buyButton.innerHTML = '<span class="animate-spin inline-block mr-2">↻</span> Processing...';
-
-        // Create a hidden form and submit it instead of using fetch
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/checkout/${selectedCourseId}/`;
-        form.style.display = 'none';
-        
-        // Add CSRF token
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = csrfToken;
-        form.appendChild(csrfInput);
-        
-        // Add tier_id
-        const tierInput = document.createElement('input');
-        tierInput.type = 'hidden';
-        tierInput.name = 'tier_id';
-        tierInput.value = selectedTierId;
-        form.appendChild(tierInput);
-        
-        // Add currency
-        const currencyInput = document.createElement('input');
-        currencyInput.type = 'hidden';
-        currencyInput.name = 'currency';
-        currencyInput.value = currency;
-        form.appendChild(currencyInput);
-        
-        // Add to DOM and submit
-        document.body.appendChild(form);
-        form.submit();
-        
-        // Clean up after a short delay
-        setTimeout(() => {
-            document.body.removeChild(form);
-        }, 1000);
-    });
-
-    function showFinalMessage() {
-        tierSelection.classList.add('hidden');
-        finalMessage.classList.remove('hidden');
-        let countdown = 3;
-        countdownElement.textContent = `Wait for scheduling of starting date of your class session in ${countdown} seconds`;
-        const interval = setInterval(() => {
-            countdown -= 1;
-            if (countdown > 0) {
-                countdownElement.textContent = `Wait for scheduling of starting date of your class session in ${countdown} seconds`;
-            } else {
-                clearInterval(interval);
-                window.location.href = `{% url 'course_content' %}`;
-            }
-        }, 1000);
+        });
     }
 
-    hoverContainer.addEventListener('click', function(e) {
-        if (e.target === hoverContainer) {
-            hoverContainer.classList.add('hidden');
-        }
-    });
+    if (previewButtons) {
+        previewButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (hoverContainer) hoverContainer.classList.remove('hidden');
+                if (previewLoader) previewLoader.classList.remove('hidden');
+                if (currencySelection) currencySelection.classList.add('hidden');
+                if (tierSelection) tierSelection.classList.add('hidden');
+                if (actionSelection) actionSelection.classList.add('hidden');
 
-    comingSoonLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            comingSoonMessage.classList.remove('hidden');
-            let countdown = 3;
-            comingSoonCountdown.textContent = `Closing in ${countdown} seconds...`;
-
-            const interval = setInterval(() => {
-                countdown -= 1;
-                if (countdown > 0) {
-                    comingSoonCountdown.textContent = `Closing in ${countdown} seconds...`;
-                } else {
-                    clearInterval(interval);
-                    comingSoonMessage.classList.add('hidden');
-                }
-            }, 1000);
+                setTimeout(() => {
+                    if (previewLoader) previewLoader.classList.add('hidden');
+                    if (hoverContainer) hoverContainer.classList.add('hidden');
+                }, 5000);
+            });
         });
-    });
+    }
+
+    if (confirmCurrency) {
+        confirmCurrency.addEventListener('click', function() {
+            const currency = document.getElementById('currency')?.value;
+            if (!currency || !selectedCourseId) return;
+
+            fetch(`/api/get_course_tiers/${selectedCourseId}/?currency=${currency}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (tiersContainer) {
+                        tiersContainer.innerHTML = '';
+                        data.tiers.forEach(tier => {
+                            const tierElement = document.createElement('div');
+                            tierElement.classList.add('border', 'rounded-md', 'p-3', 'text-sm', 'cursor-pointer', 'hover:bg-gray-100');
+                            tierElement.dataset.tierId = tier.id;
+                            tierElement.innerHTML = `
+                                <h4 class="font-semibold">${tier.name}</h4>
+                                <p class="text-gray-600 text-xs">${tier.description}</p>
+                                <p class="text-gray-800 font-medium">${tier.price}</p>
+                            `;
+                            tierElement.addEventListener('click', function() {
+                                document.querySelectorAll('#tiers-container div').forEach(el => 
+                                    el.classList.remove('bg-blue-50', 'border-blue-400'));
+                                this.classList.add('bg-blue-50', 'border-blue-400');
+                                selectedTierId = this.dataset.tierId;
+                                if (confirmTier) confirmTier.classList.remove('hidden');
+                            });
+                            tiersContainer.appendChild(tierElement);
+                        });
+
+                        if (currencySelection) currencySelection.classList.add('hidden');
+                        if (tierSelection) tierSelection.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error fetching tiers. Please try again.');
+                });
+        });
+    }
+
+    if (confirmTier) {
+        confirmTier.addEventListener('click', function() {
+            const currency = document.getElementById('currency')?.value;
+            if (!selectedTierId || !currency) {
+                alert('Please select a tier first');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('tier_id', selectedTierId);
+            formData.append('currency', currency);
+            formData.append('csrfmiddlewaretoken', csrfToken);
+
+            // Show loading state
+            const buyButton = this;
+            const originalText = buyButton.textContent;
+            buyButton.disabled = true;
+            buyButton.innerHTML = '<span class="animate-spin inline-block mr-2">↻</span> Processing...';
+
+            // Create a hidden form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/checkout/${selectedCourseId}/`;
+            form.style.display = 'none';
+            
+            // Add CSRF token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            // Add tier_id
+            const tierInput = document.createElement('input');
+            tierInput.type = 'hidden';
+            tierInput.name = 'tier_id';
+            tierInput.value = selectedTierId;
+            form.appendChild(tierInput);
+            
+            // Add currency
+            const currencyInput = document.createElement('input');
+            currencyInput.type = 'hidden';
+            currencyInput.name = 'currency';
+            currencyInput.value = currency;
+            form.appendChild(currencyInput);
+            
+            // Add to DOM and submit
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+
+    if (hoverContainer) {
+        hoverContainer.addEventListener('click', function(e) {
+            if (e.target === hoverContainer) {
+                hoverContainer.classList.add('hidden');
+            }
+        });
+    }
+
+    if (comingSoonLinks) {
+        comingSoonLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (comingSoonMessage) {
+                    comingSoonMessage.classList.remove('hidden');
+                    let countdown = 3;
+                    if (comingSoonCountdown) {
+                        comingSoonCountdown.textContent = `Closing in ${countdown} seconds...`;
+                        const interval = setInterval(() => {
+                            countdown -= 1;
+                            if (comingSoonCountdown) {
+                                if (countdown > 0) {
+                                    comingSoonCountdown.textContent = `Closing in ${countdown} seconds...`;
+                                } else {
+                                    clearInterval(interval);
+                                    comingSoonMessage.classList.add('hidden');
+                                }
+                            }
+                        }, 1000);
+                    }
+                }
+            });
+        });
+    }
 });
 </script>
 {% endblock %}
