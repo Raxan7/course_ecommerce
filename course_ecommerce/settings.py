@@ -160,32 +160,32 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'course_list'
 
 
-# LOG_FILE = "/home/useuulkn/logs/myproject-django-errors.log"
+LOG_FILE = "/home/useuulkn/logs/myproject-django-errors.log"
 
-# LOGGING = {
-#     "version": 1,
-#     "disable_existing_loggers": False,
-#     "formatters": {
-#         "verbose": {
-#             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-#             "style": "{",
-#         },
-#     },
-#     "handlers": {
-#         "file": {
-#             "level": "ERROR",
-#             "class": "logging.FileHandler",
-#             "filename": LOG_FILE,
-#         },
-#     },
-#     "loggers": {
-#         "django": {
-#             "handlers": ["file"],
-#             "level": "ERROR",
-#             "propagate": True,
-#         },
-#     },
-# }
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "file": {
+            "level": "ERROR",
+            "class": "logging.FileHandler",
+            "filename": LOG_FILE,
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+    },
+}
 
 # PesaPal Sandbox Settings
 PESAPAL_SANDBOX = True  # Set to False for production
