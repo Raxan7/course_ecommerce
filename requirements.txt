@@ -7,6 +7,7 @@ djangorestframework==3.13.1  # Critical - last version with NullBooleanField
 idna==3.10
 pillow==10.4.0
 PyMySQL==1.1.1
+python-decouple==3.8
 requests==2.32.3
 sqlparse==0.4.4
 urllib3==2.2.3
