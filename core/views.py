@@ -143,10 +143,11 @@ class CourseCheckoutView(View):
                     pass
             # ===== END AFFILIATE TRACKING =====
             
-            # COMMENTED OUT PESAPAL INTEGRATION
+            # Initialize PesaPal (RESTORED)
             debug_print("5. Initializing PesaPal service...")
             pesapal = PesaPal()
             
+            # Register IPN (RESTORED)
             debug_print("6. Registering IPN URL with PesaPal...")
             ipn_id = pesapal.register_ipn_url()
             debug_print(f"   Received IPN ID: {ipn_id}")
@@ -175,7 +176,7 @@ class CourseCheckoutView(View):
                 'description': f"Payment for {course.title} ({tier.get_name_display()})"[:100],
                 'callback_url': callback_url,
                 'cancellation_url': cancellation_url,
-                'notification_id': ipn_id,  # Commented out
+                'notification_id': ipn_id,  # RESTORED
                 'billing_address': {
                     'email_address': request.user.email,
                     'phone_number': request.user.profile.phone or '',
@@ -194,14 +195,10 @@ class CourseCheckoutView(View):
                     for subkey, subvalue in value.items():
                         debug_print(f"     {subkey}: {subvalue}")
             
-            # COMMENTED OUT PESAPAL ORDER SUBMISSION
+            # Submit order to PesaPal (RESTORED)
             debug_print("10. Submitting order to PesaPal...")
             response = pesapal.submit_order_request(order_details)
             debug_print(f"   PesaPal response: {response}")
-            
-            # Simulate successful payment response for testing
-            debug_print("10. SIMULATING payment success for testing")
-            response = {'redirect_url': callback_url + '?OrderTrackingId=TEST123'}
             
             if response and 'redirect_url' in response:
                 debug_print("11. Order submitted successfully!")
@@ -221,11 +218,11 @@ class CourseCheckoutView(View):
                 request.session.modified = True
                 debug_print("13. Session updated successfully")
                 
-                # Redirect to simulated payment page
-                debug_print(f"14. Redirecting to simulated payment page")
+                # Redirect to PesaPal payment page (RESTORED)
+                debug_print(f"14. Redirecting to PesaPal payment page")
                 return redirect(response['redirect_url'])
             else:
-                error_msg = 'Payment initialization failed'  # Hardcoded for testing
+                error_msg = response.get('error', {}).get('message', 'Payment initialization failed') if response else 'Payment service unavailable'
                 debug_print(f"   ERROR: Payment submission failed - {error_msg}")
                 messages.error(request, error_msg)
                 return redirect('course_list')
@@ -244,18 +241,15 @@ class CourseCheckoutView(View):
 
 # Add these new views for PesaPal callbacks
 def pesapal_callback(request):
-    """Handle simulated callback after payment"""
-    order_tracking_id = request.GET.get('OrderTrackingId', 'TEST123')  # Default for testing
+    """Handle PesaPal callback after payment"""
+    order_tracking_id = request.GET.get('OrderTrackingId')
     if not order_tracking_id:
         messages.error(request, 'Invalid payment callback')
         return redirect('course_list')
     
-    # COMMENTED OUT PESAPAL STATUS CHECK
+    # RESTORED: Actual PesaPal status check
     pesapal = PesaPal()
     status_response = pesapal.get_transaction_status(order_tracking_id)
-    
-    # Simulate successful payment for testing
-    status_response = {'payment_status': 'COMPLETED'}
     
     if status_response and status_response.get('payment_status') == 'COMPLETED':
         try:
@@ -284,11 +278,10 @@ def pesapal_callback(request):
                         affiliate=affiliate,
                         referred_user=request.user,
                         commission_earned=pending_affiliate['commission'],
-                        user_course=user_course  # Link to the specific purchase
+                        user_course=user_course
                     )
                     affiliate.balance += pending_affiliate['commission']
                     affiliate.save()
-                    
                     debug_print(f"Affiliate commission processed: {affiliate.user.username} earned {pending_affiliate['commission']}")
                 except Affiliate.DoesNotExist:
                     debug_print("Affiliate not found - commission not processed")
@@ -316,13 +309,22 @@ def pesapal_callback(request):
 
 @csrf_exempt
 def pesapal_ipn(request):
-    """Handle simulated Instant Payment Notification"""
+    """Handle Instant Payment Notification from PesaPal"""
     if request.method == 'POST':
         try:
-            # For testing, just log that we received an IPN
-            debug_print("Received simulated IPN notification")
-            return JsonResponse({'status': 'ok'})
+            data = json.loads(request.body)
+            order_tracking_id = data.get('OrderNotification', {}).get('OrderTrackingId')
             
+            if order_tracking_id:
+                # Verify payment status (RESTORED)
+                pesapal = PesaPal()
+                status_response = pesapal.get_transaction_status(order_tracking_id)
+                
+                if status_response and status_response.get('payment_status') == 'COMPLETED':
+                    # Here you would typically update your database
+                    # You might want to store the IPN notification for auditing
+                    pass
+                    
         except Exception as e:
             print(f"Error processing IPN: {str(e)}")
     
