@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 from django.conf import settings
 from django.conf.urls.static import static
+from decouple import config  # Add this import
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-+jp1m+u@2nfd82ac%)b@ghh&b-lka^&i8-nhca25h7_6x!+o1x'
+SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -41,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'core',
+    'affiliates',
 ]
 
 MIDDLEWARE = [
@@ -52,6 +54,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'affiliates.middleware.AffiliateMiddleware',
 ]
 
 ROOT_URLCONF = 'course_ecommerce.urls'
@@ -153,7 +157,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'auth.User'  # Or your custom user model if you created one
 
 # Pesapal API configuration
-PESAPAL_API_KEY = 'your-pesapal-api-key'
+PESAPAL_API_KEY = config('PESAPAL_API_KEY')
 
 # Redirect after login
 LOGIN_URL = 'login'
@@ -188,12 +192,12 @@ LOGGING = {
 }
 
 # PesaPal Sandbox Settings
-PESAPAL_SANDBOX = True  # Set to False for production
-PESAPAL_CONSUMER_KEY = 'ngW+UEcnDhltUc5fxPfrCD987xMh3Lx8'
-PESAPAL_CONSUMER_SECRET = 'q27RChYs5UkypdcNYKzuUw460Dg='
+PESAPAL_SANDBOX = config('PESAPAL_SANDBOX', default=True, cast=bool)
+PESAPAL_CONSUMER_KEY = config('PESAPAL_CONSUMER_KEY')
+PESAPAL_CONSUMER_SECRET = config('PESAPAL_CONSUMER_SECRET')
 PESAPAL_API_ENDPOINT = 'https://cybqa.pesapal.com/pesapalv3' if PESAPAL_SANDBOX else 'https://pay.pesapal.com/v3'
-PESAPAL_CALLBACK_URL = 'https://useuniservices.com/pesapal/callback/'
-PESAPAL_IPN_URL = 'https://useuniservices.com/pesapal/ipn/'
+PESAPAL_CALLBACK_URL = config('PESAPAL_CALLBACK_URL')
+PESAPAL_IPN_URL = config('PESAPAL_IPN_URL')
 
 # Add to your settings.py
 SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'

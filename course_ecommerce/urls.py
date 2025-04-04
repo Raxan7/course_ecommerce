@@ -25,5 +25,7 @@ urlpatterns = [
     path('', include('core.urls')),  # Include core app URLs  
     path('logout/', logout_view, name='logout'),  # Add logout URL
 
+    path('affiliate/', include('affiliates.urls')),
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  # Serve media files in development]
