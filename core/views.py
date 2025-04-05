@@ -459,3 +459,25 @@ class CourseListView(ListView):
 
 def course_content(request):
     return render(request, 'core/course_content.html')
+
+@csrf_exempt
+def toggle_like(request, course_id):
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+
+    if request.method == 'POST':
+        try:
+            course = Course.objects.get(id=course_id)
+            if request.user in course.liked_users.all():
+                course.liked_users.remove(request.user)
+                course.likes_count -= 1
+                liked = False
+            else:
+                course.liked_users.add(request.user)
+                course.likes_count += 1
+                liked = True
+            course.save()
+            return JsonResponse({'liked': liked, 'likes_count': course.likes_count})
+        except Course.DoesNotExist:
+            return JsonResponse({'error': 'Course not found'}, status=404)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)

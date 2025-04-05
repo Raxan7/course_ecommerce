@@ -60,6 +60,7 @@ class Course(models.Model):
     rating = models.DecimalField(max_digits=3, decimal_places=1, default=0)
     featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+    liked_users = models.ManyToManyField(User, related_name='liked_courses', blank=True)
     
     # Tier relationship
     tier = models.ForeignKey(CourseTier, on_delete=models.PROTECT, related_name='default_courses')

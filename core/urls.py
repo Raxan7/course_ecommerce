@@ -32,6 +32,7 @@ urlpatterns = [
     path('api/get_course_data/<int:course_id>/', api_views.get_course_data, name='get_course_data'),
     path('api/buy_course/<int:course_id>/', api_views.buy_course, name='buy_course'),
     path('api/get_course_tiers/<int:course_id>/', api_views.get_course_tiers, name='get_course_tiers'),
+    path('api/toggle_like/<int:course_id>/', views.toggle_like, name='toggle_like'),
 
     path('course/content/', views.course_content, name='course_content'),
 

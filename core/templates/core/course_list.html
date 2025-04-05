@@ -33,11 +33,14 @@
                     <!-- Likes and Comments -->
                     <div class="flex items-center text-gray-500 text-xs mb-2">
                         <span class="mr-3">
-                            <i class="far fa-thumbs-up mr-1"></i> {{ course.likes_count }} Likes
+                            <button class="like-button" data-course-id="{{ course.id }}">
+                                <i class="far fa-thumbs-up mr-1"></i> 
+                                <span class="likes-count">{{ course.likes_count }}</span> Likes
+                            </button>
                         </span>
-                        <span>
+                        <!-- <span>
                             <i class="far fa-comment mr-1"></i> {{ course.comments_count }} Comments
-                        </span>
+                        </span> -->
                     </div>
                     
                     <!-- Course Description -->
@@ -129,6 +132,11 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+    /* Add animation for the like icon */
+    .animate-like {
+        transform: scale(1.3);
+        transition: transform 0.2s ease;
+    }
 </style>
 
 <script>
@@ -148,6 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const comingSoonLinks = document.querySelectorAll('.coming-soon-link');
     const comingSoonMessage = document.getElementById('coming-soon-message');
     const comingSoonCountdown = document.getElementById('coming-soon-countdown');
+    const likeButtons = document.querySelectorAll('.like-button');
 
     // Remove references to non-existent elements
     // const finalMessage = document.getElementById('final-message');
@@ -203,10 +212,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             const tierElement = document.createElement('div');
                             tierElement.classList.add('border', 'rounded-md', 'p-3', 'text-sm', 'cursor-pointer', 'hover:bg-gray-100');
                             tierElement.dataset.tierId = tier.id;
+
+                            // Format price with commas and add a space after the currency symbol
+                            const formattedPrice = formatPriceWithSpace(tier.price);
+
                             tierElement.innerHTML = `
                                 <h4 class="font-semibold">${tier.name}</h4>
                                 <p class="text-gray-600 text-xs">${tier.description}</p>
-                                <p class="text-gray-800 font-medium">${tier.price}</p>
+                                <p class="text-gray-800 font-medium">${formattedPrice}</p>
                             `;
                             tierElement.addEventListener('click', function() {
                                 document.querySelectorAll('#tiers-container div').forEach(el => 
@@ -227,6 +240,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('Error fetching tiers. Please try again.');
                 });
         });
+    }
+
+    // Function to format price with commas and add a space after the currency symbol
+    function formatPriceWithSpace(price) {
+        return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",").replace(/^(\D+)/, "$1 ");
     }
 
     if (confirmTier) {
@@ -311,6 +329,50 @@ document.addEventListener('DOMContentLoaded', function() {
                         }, 1000);
                     }
                 }
+            });
+        });
+    }
+
+    if (likeButtons) {
+        likeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const courseId = this.dataset.courseId;
+                const likesCountElement = this.querySelector('.likes-count');
+                const iconElement = this.querySelector('i');
+                let likesCount = parseInt(likesCountElement.textContent);
+
+                // Add animation class
+                iconElement.classList.add('animate-like');
+
+                fetch(`/api/toggle_like/${courseId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => {
+                    if (response.status === 401) {
+                        // Redirect to login page if user is not authenticated
+                        window.location.href = '{% url "login" %}';
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.liked) {
+                        likesCount += 1;
+                        iconElement.classList.add('text-red-500'); // Add red color
+                    } else {
+                        likesCount -= 1;
+                        iconElement.classList.remove('text-red-500'); // Remove red color
+                    }
+                    likesCountElement.textContent = likesCount;
+                })
+                .catch(error => console.error('Error:', error))
+                .finally(() => {
+                    // Remove animation class after animation ends
+                    setTimeout(() => iconElement.classList.remove('animate-like'), 300);
+                });
             });
         });
     }
